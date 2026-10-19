@@ -1,16 +1,18 @@
+int i = 0;
 
-string nombre;
-Console.WriteLine("Escribe tu nombre:");
-nombre = Console.ReadLine();
-Console.WriteLine(nombre);
-string apellido = Console.ReadLine();
-Console.WriteLine(apellido);
+for (; i < 5; i += 1)
+{
+    Console.WriteLine(i);
+}
 
-int resultado = sumar(5, 3);
-Console.WriteLine(resultado);
+int x = 0;
 
-int valor = obtenerValor();
-Console.WriteLine(valor);
+for (x = 0; x < 5; x += 1)
+{
+    Console.WriteLine(x);
+}
 
-int operacion = sumar(2 + 3, 4);
-Console.WriteLine(operacion);
+for (y = 0; y < 5; y += 1)
+{
+    Console.WriteLine(y);
+}

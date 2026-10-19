@@ -120,6 +120,8 @@ TOKEN : {
 |   < DIFERENTE: "!=" >
 |   < MENOR: "<" >
 |   < MAYOR: ">" >
+|   < SUMA_ASIGNACION: "+=">
+|   < RESTA_ASIGNACION: "-=">
 |   < SUMA: "+" >
 |   < RESTA: "-" >
 |   < MULT: "*" >
@@ -216,18 +218,81 @@ Nodo declaracionVariable() :
     t=<PUNTO_Y_COMA> { mostrarToken(t); return n; }
 }
 
+Nodo declaracionVariableFor() :
+{ Token t; Nodo n = new Nodo("declaracionVariable"); Nodo exp = null; }
+{
+    { regla("declaracionVariableFor -> tipo identificador (asignacion expresion)?"); }
+
+    (
+          t=<INT>     { mostrarToken(t); n.atributo("tipoDato", "int"); }
+        | t=<BOOLEAN> { mostrarToken(t); n.atributo("tipoDato", "boolean"); }
+        | t=<STRING>  { mostrarToken(t); n.atributo("tipoDato", "string"); }
+        | t=<CHAR>    { mostrarToken(t); n.atributo("tipoDato", "char"); }
+        | t=<DOUBLE>  { mostrarToken(t); n.atributo("tipoDato", "double"); }
+        | t=<FLOAT>   { mostrarToken(t); n.atributo("tipoDato", "float"); }
+        | t=<LONG>    { mostrarToken(t); n.atributo("tipoDato", "long"); }
+        | t=<SHORT>   { mostrarToken(t); n.atributo("tipoDato", "short"); }
+        | t=<BYTE>    { mostrarToken(t); n.atributo("tipoDato", "byte"); }
+    )
+
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+        n.valor = t.image;
+        Semantico.declararVariable(
+            t.image,
+            n.atributoPorDefecto("tipoDato", "variable")
+        );
+    }
+
+    [
+        t=<ASIGNACION> { mostrarToken(t); }
+        exp=expresion() { n.agregar(exp); }
+    ]
+
+    { return n; }
+}
+
 // ------------------------------------------------------
 // ASIGNACION
 // ------------------------------------------------------
+
 Nodo asignacion() :
 { Token t; Nodo n = new Nodo("asignacion"); Nodo exp; }
 {
-    { regla("asignacion -> identificador asignacion expresion puntocoma"); }
-    t=<IDENTIFICADOR> { mostrarToken(t); n.valor = t.image; }
-    t=<ASIGNACION> { mostrarToken(t); }
-    exp=expresion() { n.agregar(exp); }
-    t=<PUNTO_Y_COMA> { mostrarToken(t); return n; }
+    { regla("asignacion -> identificador operador expresion puntocoma"); }
+
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+        n.valor = t.image;
+    }
+
+    (
+        t=<ASIGNACION> {
+            mostrarToken(t);
+            n.atributo("operadorAsignacion", "=");
+        }
+      |
+        t=<SUMA_ASIGNACION> {
+            mostrarToken(t);
+            n.atributo("operadorAsignacion", "+=");
+        }
+      |
+        t=<RESTA_ASIGNACION> {
+            mostrarToken(t);
+            n.atributo("operadorAsignacion", "-=");
+        }
+    )
+
+    exp=expresion() {
+        n.agregar(exp);
+    }
+
+    t=<PUNTO_Y_COMA> {
+        mostrarToken(t);
+        return n;
+    }
 }
+
 
 // ------------------------------------------------------
 // INCREMENTO / DECREMENTO
@@ -396,32 +461,71 @@ Nodo returnInstruccion() :
 // FOR
 // ------------------------------------------------------
 Nodo cicloPara() :
-{ Token t; Nodo n = new Nodo("cicloPara"); Nodo init, cond, upd, cuerpo; }
 {
-    { regla("cicloPara -> for ( asignacionSimple ; expresionLogica ; asignacionSimple ) bloque"); }
+    Token t;
+    Nodo n = new Nodo("cicloPara");
+    Nodo init, cond, upd, cuerpo;
+}
+{
+    { regla("cicloPara -> for ( inicializacion ; condicion ; actualizacion ) bloque"); }
+
     t=<FOR> { mostrarToken(t); }
     t=<PARENTESIS_IZQ> { mostrarToken(t); }
-    init=asignacionSimple() { n.agregar(init); }
+
+    (
+        LOOKAHEAD(<PUNTO_Y_COMA>)
+        { n.agregar(new Nodo("sinInicializacion")); }
+
+      |
+        LOOKAHEAD(2)
+        init=declaracionVariableFor() { n.agregar(init); }
+
+      |
+        init=asignacionSimple() { n.agregar(init); }
+    )
+
     t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
     cond=expresionLogica() { n.agregar(cond); }
+
     t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
     upd=asignacionSimple() { n.agregar(upd); }
+
     t=<PARENTESIS_DER> { mostrarToken(t); }
-    cuerpo=bloque() { n.agregar(cuerpo); return n; }
+
+    cuerpo=bloque() { n.agregar(cuerpo); }
+
+    { return n; }
 }
 
 Nodo asignacionSimple() :
 { Token t; Nodo n = new Nodo("asignacionSimple"); Nodo exp; }
 {
-    t=<IDENTIFICADOR> { mostrarToken(t); n.valor = t.image; }
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+        n.valor = t.image;
+    }
 
     (
-        t=<ASIGNACION> {
-            mostrarToken(t);
-        }
+        (
+            t=<ASIGNACION> {
+                mostrarToken(t);
+                n.atributo("operadorAsignacion", "=");
+            }
+          |
+            t=<SUMA_ASIGNACION> {
+                mostrarToken(t);
+                n.atributo("operadorAsignacion", "+=");
+            }
+          |
+            t=<RESTA_ASIGNACION> {
+                mostrarToken(t);
+                n.atributo("operadorAsignacion", "-=");
+            }
+        )
         exp=expresion() {
             n.agregar(exp);
-            n.atributo("operadorAsignacion", "=");
         }
 
       |

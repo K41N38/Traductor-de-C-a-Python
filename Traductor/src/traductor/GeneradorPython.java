@@ -16,8 +16,11 @@ import java.util.*;
 public class GeneradorPython {
 
     private static final String INDENT = "    ";
+    // Permite distinguir si un break pertenece a un ciclo o a un switch.
+    private final Deque<String> contextosRuptura = new ArrayDeque<>();
 
     public String generar(Nodo raiz) {
+        contextosRuptura.clear();
         StringBuilder sb = new StringBuilder();
         for (Nodo hijo : raiz.hijos) {
             sb.append(generarInstruccion(hijo, 0));
@@ -32,19 +35,17 @@ public class GeneradorPython {
     private String generarInstruccion(Nodo n, int nivel) {
         switch (n.tipo) {
             case "declaracionVariable": return generarDeclaracion(n, nivel);
-            case "asignacion":          return tab(nivel) + n.valor + " = " + generarExpr(n.hijo(0)) + "\n";
-            case "asignacionSimple":    return tab(nivel) + n.valor + " = " + generarExpr(n.hijo(0)) + "\n";
+            case "asignacion":          return generarAsignacion(n, nivel);
+            case "asignacionSimple":    return generarAsignacion(n, nivel);
             case "incrementoDecremento": return generarIncrementoDecremento(n, nivel);
             case "condicion":           return generarCondicion(n, nivel);
-            case "cicloMientras":       return tab(nivel) + "while " + generarExpr(n.hijo(0)) + ":\n"
-                                                 + generarBloque(n.hijo(1), nivel + 1);
             case "cicloPara":           return generarPara(n, nivel);
             case "cicloDoWhile":        return generarDoWhile(n, nivel);
-            case "cicloForeach":        return tab(nivel) + "for " + n.valor + " in " + n.atributo("coleccion") + ":\n"
-                                                 + generarBloque(n.hijo(0), nivel + 1);
             case "estructuraSwitch":    return generarSwitch(n, nivel);
             case "escritura":           return tab(nivel) + "print(" + generarExpr(n.hijo(0)) + ")\n";
-            case "breakInstruccion":    return tab(nivel) + "break\n";
+            case "cicloMientras":       return generarMientras(n, nivel);
+            case "cicloForeach":        return generarForeach(n, nivel);
+            case "breakInstruccion":    return generarBreak(nivel);
             case "continueInstruccion": return tab(nivel) + "continue\n";
             case "returnInstruccion":   return tab(nivel) + "return" + (n.hijos.isEmpty() ? "" : " " + generarExpr(n.hijo(0))) + "\n";
             case "bloque":              return generarBloque(n, nivel);
@@ -70,6 +71,24 @@ public class GeneradorPython {
         return tab(nivel) + nombre + " = " + valorDefault + "\n";
     }
     
+    
+    private String generarAsignacion(Nodo n, int nivel) {
+        String operador = n.atributoPorDefecto(
+            "operadorAsignacion", "="
+        );
+
+        if ("++".equals(operador)) {
+            return tab(nivel) + n.valor + " += 1\n";
+        }
+
+        if ("--".equals(operador)) {
+            return tab(nivel) + n.valor + " -= 1\n";
+        }
+
+        return tab(nivel) + n.valor + " " + operador + " "
+                + generarExpr(n.hijo(0)) + "\n";
+    }
+
     private String generarIncrementoDecremento(Nodo n, int nivel) {
         String operador = n.atributoPorDefecto("operador", "");
 
@@ -84,6 +103,50 @@ public class GeneradorPython {
         return "";
     }
     
+    private String generarMientras(Nodo n, int nivel) {
+        return tab(nivel)
+                + "while " + generarExpr(n.hijo(0)) + ":\n"
+                + generarBloqueConContexto(n.hijo(1), nivel + 1, "ciclo");
+    }
+
+    private String generarForeach(Nodo n, int nivel) {
+        return tab(nivel)
+                + "for " + n.valor + " in " + n.atributo("coleccion") + ":\n"
+                + generarBloqueConContexto(n.hijo(0), nivel + 1, "ciclo");
+    }
+
+    private String generarBreak(int nivel) {
+        if (!contextosRuptura.isEmpty()) {
+            String contexto = contextosRuptura.peek();
+
+            if ("switch".equals(contexto)) {
+                // En C#, este break termina el switch.
+                // El if/elif generado en Python termina por sí mismo.
+                return "";
+            }
+
+            if ("ciclo".equals(contexto)) {
+                return tab(nivel) + "break\n";
+            }
+        }
+
+        // Evita generar un break inválido en Python.
+        return tab(nivel)
+                + "# break sin ciclo ni switch contenedor\n";
+    }
+
+    private String generarBloqueConContexto(
+            Nodo bloque, int nivel, String contexto) {
+
+        contextosRuptura.push(contexto);
+
+        try {
+            return generarBloque(bloque, nivel);
+        } finally {
+            contextosRuptura.pop();
+        }
+    }
+    
     private String generarCondicion(Nodo n, int nivel) {
         StringBuilder sb = new StringBuilder();
         sb.append(tab(nivel)).append("if ").append(generarExpr(n.hijo(0))).append(":\n");
@@ -94,7 +157,7 @@ public class GeneradorPython {
         }
         return sb.toString();
     }
-
+    
     private String generarPara(Nodo n, int nivel) {
         Nodo init = n.hijo(0);
         Nodo cond = n.hijo(1);
@@ -103,87 +166,135 @@ public class GeneradorPython {
 
         StringBuilder sb = new StringBuilder();
 
-        // Inicialización
-        if ("++".equals(init.atributo("operadorAsignacion"))) {
-            sb.append(tab(nivel)).append(init.valor).append(" += 1\n");
-        } else if ("--".equals(init.atributo("operadorAsignacion"))) {
-            sb.append(tab(nivel)).append(init.valor).append(" -= 1\n");
-        } else {
-            sb.append(tab(nivel))
-              .append(init.valor)
-              .append(" = ")
-              .append(generarExpr(init.hijo(0)))
-              .append("\n");
+        // Inicialización: puede estar vacía.
+        if (init != null && !"sinInicializacion".equals(init.tipo)) {
+            if ("declaracionVariable".equals(init.tipo)) {
+                sb.append(generarDeclaracion(init, nivel));
+            } else {
+                sb.append(generarAsignacion(init, nivel));
+            }
         }
 
-        // Condición
+        // Condición del ciclo.
         sb.append(tab(nivel))
           .append("while ")
           .append(generarExpr(cond))
           .append(":\n");
 
-        sb.append(generarBloque(cuerpo, nivel + 1));
+        // Cuerpo del ciclo.
+        sb.append(
+            generarBloqueConContexto(cuerpo, nivel + 1, "ciclo")
+        );
 
-        // Actualización
-        String operador = upd.atributoPorDefecto("operadorAsignacion", "=");
-
-        if ("++".equals(operador)) {
-            sb.append(tab(nivel + 1))
-              .append(upd.valor)
-              .append(" += 1\n");
-        } else if ("--".equals(operador)) {
-            sb.append(tab(nivel + 1))
-              .append(upd.valor)
-              .append(" -= 1\n");
-        } else {
-            sb.append(tab(nivel + 1))
-              .append(upd.valor)
-              .append(" = ")
-              .append(generarExpr(upd.hijo(0)))
-              .append("\n");
-        }
+        // Actualización: conserva =, +=, -=, ++ o --.
+        sb.append(generarAsignacion(upd, nivel + 1));
 
         return sb.toString();
     }
-
+    
     private String generarDoWhile(Nodo n, int nivel) {
-        Nodo cuerpo = n.hijo(0), cond = n.hijo(1);
+        Nodo cuerpo = n.hijo(0);
+        Nodo cond = n.hijo(1);
+
         StringBuilder sb = new StringBuilder();
+
         sb.append(tab(nivel)).append("while True:\n");
-        sb.append(generarBloque(cuerpo, nivel + 1));
-        sb.append(tab(nivel + 1)).append("if not (").append(generarExpr(cond)).append("):\n");
+
+        sb.append(
+            generarBloqueConContexto(cuerpo, nivel + 1, "ciclo")
+        );
+
+        sb.append(tab(nivel + 1))
+          .append("if not (")
+          .append(generarExpr(cond))
+          .append("):\n");
+
         sb.append(tab(nivel + 2)).append("break\n");
+
         return sb.toString();
     }
-
+    
     private String generarSwitch(Nodo n, int nivel) {
-        // Se traduce como cadena if / elif / else para mantener compatibilidad
-        // con cualquier version de Python (match/case requiere 3.10+).
         StringBuilder sb = new StringBuilder();
         String expr = generarExpr(n.hijo(0));
         boolean primero = true;
-        for (int i = 1; i < n.hijos.size(); i++) {
+
+        int i = 1;
+
+        while (i < n.hijos.size()) {
             Nodo caso = n.hijo(i);
+
             if (caso.tipo.equals("casoSwitch")) {
-                String etiqueta = primero ? "if" : "elif";
-                sb.append(tab(nivel)).append(etiqueta).append(" ").append(expr)
-                  .append(" == ").append(generarExpr(caso.hijo(0))).append(":\n");
+                List<Nodo> etiquetas = new ArrayList<>();
+                etiquetas.add(caso);
+
+                // Agrupar etiquetas consecutivas sin instrucciones.
+                while (caso.hijos.size() == 1
+                        && i + 1 < n.hijos.size()
+                        && n.hijo(i + 1).tipo.equals("casoSwitch")) {
+
+                    i++;
+                    caso = n.hijo(i);
+                    etiquetas.add(caso);
+                }
+
+                StringBuilder condicion = new StringBuilder();
+
+                for (int j = 0; j < etiquetas.size(); j++) {
+                    if (j > 0) {
+                        condicion.append(" or ");
+                    }
+
+                    condicion.append(expr)
+                             .append(" == ")
+                             .append(generarExpr(etiquetas.get(j).hijo(0)));
+                }
+
+                String palabra = primero ? "if" : "elif";
+
+                sb.append(tab(nivel))
+                  .append(palabra)
+                  .append(" ")
+                  .append(condicion)
+                  .append(":\n");
+
                 sb.append(generarCuerpoCaso(caso, 1, nivel + 1));
+
                 primero = false;
+                i++;
+
             } else if (caso.tipo.equals("casoDefault")) {
                 sb.append(tab(nivel)).append("else:\n");
                 sb.append(generarCuerpoCaso(caso, 0, nivel + 1));
+                i++;
+
+            } else {
+                i++;
             }
         }
+
         return sb.toString();
     }
 
-    private String generarCuerpoCaso(Nodo caso, int desdeIndice, int nivel) {
+    private String generarCuerpoCaso(
+            Nodo caso, int desdeIndice, int nivel) {
+
         StringBuilder sb = new StringBuilder();
-        for (int j = desdeIndice; j < caso.hijos.size(); j++) {
-            sb.append(generarInstruccion(caso.hijo(j), nivel));
+
+        contextosRuptura.push("switch");
+
+        try {
+            for (int j = desdeIndice; j < caso.hijos.size(); j++) {
+                sb.append(generarInstruccion(caso.hijo(j), nivel));
+            }
+        } finally {
+            contextosRuptura.pop();
         }
-        if (sb.length() == 0) sb.append(tab(nivel)).append("pass\n");
+
+        if (sb.length() == 0) {
+            sb.append(tab(nivel)).append("pass\n");
+        }
+
         return sb.toString();
     }
 
