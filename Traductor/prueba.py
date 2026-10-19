@@ -1,0 +1,12 @@
+nombre = ""
+print("Escribe tu nombre:")
+nombre = input()
+print(nombre)
+apellido = input()
+print(apellido)
+resultado = sumar(5, 3)
+print(resultado)
+valor = obtenerValor()
+print(valor)
+operacion = sumar(2 + 3, 4)
+print(operacion)
