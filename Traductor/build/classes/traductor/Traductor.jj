@@ -78,7 +78,7 @@ PARSER_END(Traductor)
 SKIP : { " " | "\t" | "\n" | "\r" }
 
 // ======================================================
-// TOKENS - idénticos a Analizador.jj
+// TOKENS
 // ======================================================
 TOKEN : {
     < IF: "if" >
@@ -103,6 +103,7 @@ TOKEN : {
 |   < FOREACH: "foreach" >
 |   < IN: "in" >
 |   < INT: "int" >
+|   < NEW: "new" >
 |   < BOOLEAN: "boolean" >
 |   < STRING: "string" >
 |   < CHAR: "char" >
@@ -111,6 +112,8 @@ TOKEN : {
 |   < LONG: "long" >
 |   < SHORT: "short" >
 |   < BYTE: "byte" >
+|   <COMENTARIO_LINEA: "//" (~["\n", "\r"])* >
+|   <COMENTARIO_BLOQUE: "/*" (~["*"] | "*" ~["/"])* "*/" >
 }
 
 TOKEN : {
@@ -170,7 +173,10 @@ Nodo instruccion() :
 { Nodo n; }
 {
     (
-          LOOKAHEAD(2) n=declaracionVariable()
+          LOOKAHEAD(2) n=comentario()
+        | LOOKAHEAD(2) n=declaracionVariable()
+        | LOOKAHEAD(6) n=copiarArreglo()
+        | LOOKAHEAD(4) n=operacionArreglo()
         | LOOKAHEAD(2) n=asignacion()
         | LOOKAHEAD(2) n=incrementoDecremento()
         | LOOKAHEAD(2) n=condicion()
@@ -185,63 +191,95 @@ Nodo instruccion() :
         | LOOKAHEAD(2) n=returnInstruccion()
         | LOOKAHEAD(2) n=bloque()
     )
-    { return n; }
+    {
+        if (n != null) {
+            n.atributo(
+                "lineaFin",
+                String.valueOf(getToken(0).endLine)
+            );
+        }
+        return n;
+    }
+}
+
+Nodo comentario() :
+{
+    Token t;
+    Nodo n = new Nodo("comentario");
+}
+{
+    (
+        t=<COMENTARIO_LINEA>
+      |
+        t=<COMENTARIO_BLOQUE>
+    )
+    {
+        n.valor = t.image;
+        n.atributo(
+            "lineaInicio",
+            String.valueOf(t.beginLine)
+        );
+        return n;
+    }
 }
 
 // ------------------------------------------------------
 // DECLARACION DE VARIABLES
 // ------------------------------------------------------
+
 Nodo declaracionVariable() :
-{ Token t; Nodo n = new Nodo("declaracionVariable"); Nodo exp = null; }
 {
-    { regla("declaracionVariable -> tipo identificador (asignacion expresion)? puntocoma"); }
+    Token t;
+    String tipoDato = "";
+    Nodo lista = new Nodo("declaracionesMultiples");
+    Nodo variable;
+}
+{
+    { regla("declaracionVariable -> tipo listaVariables puntocoma"); }
+
     (
-          t=<INT>     { mostrarToken(t); n.atributo("tipoDato", "int"); }
-        | t=<BOOLEAN> { mostrarToken(t); n.atributo("tipoDato", "boolean"); }
-        | t=<STRING>  { mostrarToken(t); n.atributo("tipoDato", "string"); }
-        | t=<CHAR>    { mostrarToken(t); n.atributo("tipoDato", "char"); }
-        | t=<DOUBLE>  { mostrarToken(t); n.atributo("tipoDato", "double"); }
-        | t=<FLOAT>   { mostrarToken(t); n.atributo("tipoDato", "float"); }
-        | t=<LONG>    { mostrarToken(t); n.atributo("tipoDato", "long"); }
-        | t=<SHORT>   { mostrarToken(t); n.atributo("tipoDato", "short"); }
-        | t=<BYTE>    { mostrarToken(t); n.atributo("tipoDato", "byte"); }
+          t=<INT>     { mostrarToken(t); tipoDato = "int"; }
+        | t=<BOOLEAN> { mostrarToken(t); tipoDato = "boolean"; }
+        | t=<STRING>  { mostrarToken(t); tipoDato = "string"; }
+        | t=<CHAR>    { mostrarToken(t); tipoDato = "char"; }
+        | t=<DOUBLE>  { mostrarToken(t); tipoDato = "double"; }
+        | t=<FLOAT>   { mostrarToken(t); tipoDato = "float"; }
+        | t=<LONG>    { mostrarToken(t); tipoDato = "long"; }
+        | t=<SHORT>   { mostrarToken(t); tipoDato = "short"; }
+        | t=<BYTE>    { mostrarToken(t); tipoDato = "byte"; }
     )
-    t=<IDENTIFICADOR> {
-        mostrarToken(t);
-        n.valor = t.image;
-        Semantico.declararVariable(t.image, n.atributoPorDefecto("tipoDato", "variable"));
-    }
+
     [
-        t=<ASIGNACION> { mostrarToken(t); }
-        exp=expresion() { n.agregar(exp); }
+        t=<CORCHETE_IZQ> { mostrarToken(t); }
+        t=<CORCHETE_DER> { mostrarToken(t); }
+        { tipoDato = tipoDato + "[]"; }
     ]
-    t=<PUNTO_Y_COMA> { mostrarToken(t); return n; }
+
+    variable=declaracionVariableElemento(tipoDato) {
+        lista.agregar(variable);
+    }
+
+    (
+        t=<COMA> { mostrarToken(t); }
+        variable=declaracionVariableElemento(tipoDato) {
+            lista.agregar(variable);
+        }
+    )*
+
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
+    { return lista; }
 }
 
-Nodo declaracionVariableFor() :
-{ Token t; Nodo n = new Nodo("declaracionVariable"); Nodo exp = null; }
+Nodo declaracionVariableElemento(String tipoDato) :
+{ Token t; Nodo n = new Nodo("declaracionVariable"); Nodo exp; }
 {
-    { regla("declaracionVariableFor -> tipo identificador (asignacion expresion)?"); }
-
-    (
-          t=<INT>     { mostrarToken(t); n.atributo("tipoDato", "int"); }
-        | t=<BOOLEAN> { mostrarToken(t); n.atributo("tipoDato", "boolean"); }
-        | t=<STRING>  { mostrarToken(t); n.atributo("tipoDato", "string"); }
-        | t=<CHAR>    { mostrarToken(t); n.atributo("tipoDato", "char"); }
-        | t=<DOUBLE>  { mostrarToken(t); n.atributo("tipoDato", "double"); }
-        | t=<FLOAT>   { mostrarToken(t); n.atributo("tipoDato", "float"); }
-        | t=<LONG>    { mostrarToken(t); n.atributo("tipoDato", "long"); }
-        | t=<SHORT>   { mostrarToken(t); n.atributo("tipoDato", "short"); }
-        | t=<BYTE>    { mostrarToken(t); n.atributo("tipoDato", "byte"); }
-    )
-
     t=<IDENTIFICADOR> {
         mostrarToken(t);
         n.valor = t.image;
-        Semantico.declararVariable(
-            t.image,
-            n.atributoPorDefecto("tipoDato", "variable")
-        );
+        n.atributo("tipoDato", tipoDato);
+
+        Semantico.declararVariable(t.image, tipoDato);
     }
 
     [
@@ -252,47 +290,100 @@ Nodo declaracionVariableFor() :
     { return n; }
 }
 
+Nodo declaracionVariableFor() :
+{
+    Token t;
+    String tipoDato = "";
+    Nodo lista = new Nodo("declaracionesMultiples");
+    Nodo variable;
+}
+{
+    (
+          t=<INT>     { mostrarToken(t); tipoDato = "int"; }
+        | t=<BOOLEAN> { mostrarToken(t); tipoDato = "boolean"; }
+        | t=<STRING>  { mostrarToken(t); tipoDato = "string"; }
+        | t=<CHAR>    { mostrarToken(t); tipoDato = "char"; }
+        | t=<DOUBLE>  { mostrarToken(t); tipoDato = "double"; }
+        | t=<FLOAT>   { mostrarToken(t); tipoDato = "float"; }
+        | t=<LONG>    { mostrarToken(t); tipoDato = "long"; }
+        | t=<SHORT>   { mostrarToken(t); tipoDato = "short"; }
+        | t=<BYTE>    { mostrarToken(t); tipoDato = "byte"; }
+    )
+
+    [
+        t=<CORCHETE_IZQ> { mostrarToken(t); }
+        t=<CORCHETE_DER> { mostrarToken(t); }
+        { tipoDato = tipoDato + "[]"; }
+    ]
+
+    variable=declaracionVariableElemento(tipoDato) {
+        lista.agregar(variable);
+    }
+
+    (
+        t=<COMA> { mostrarToken(t); }
+        variable=declaracionVariableElemento(tipoDato) {
+            lista.agregar(variable);
+        }
+    )*
+
+    { return lista; }
+}
+
 // ------------------------------------------------------
 // ASIGNACION
 // ------------------------------------------------------
-
 Nodo asignacion() :
-{ Token t; Nodo n = new Nodo("asignacion"); Nodo exp; }
 {
-    { regla("asignacion -> identificador operador expresion puntocoma"); }
+    Token t;
+    Nodo n = new Nodo("asignacion");
+    Nodo indice = null;
+    Nodo exp;
+}
+{
+    { regla("asignacion -> identificador indiceOpcional operador expresion puntocoma"); }
 
-    t=<IDENTIFICADOR> {
+    t=<IDENTIFICADOR>
+    {
         mostrarToken(t);
         n.valor = t.image;
     }
 
+    [
+        t=<CORCHETE_IZQ> { mostrarToken(t); }
+        indice=expresion()
+        t=<CORCHETE_DER> { mostrarToken(t); }
+        {
+            n.atributo("asignacionArreglo", "true");
+            n.agregar(indice);
+        }
+    ]
+
     (
-        t=<ASIGNACION> {
+        t=<ASIGNACION>
+        {
             mostrarToken(t);
             n.atributo("operadorAsignacion", "=");
         }
-      |
-        t=<SUMA_ASIGNACION> {
+      | t=<SUMA_ASIGNACION>
+        {
             mostrarToken(t);
             n.atributo("operadorAsignacion", "+=");
         }
-      |
-        t=<RESTA_ASIGNACION> {
+      | t=<RESTA_ASIGNACION>
+        {
             mostrarToken(t);
             n.atributo("operadorAsignacion", "-=");
         }
     )
 
-    exp=expresion() {
-        n.agregar(exp);
-    }
+    exp=expresion()
+    { n.agregar(exp); }
 
-    t=<PUNTO_Y_COMA> {
-        mostrarToken(t);
-        return n;
-    }
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
+    { return n; }
 }
-
 
 // ------------------------------------------------------
 // INCREMENTO / DECREMENTO
@@ -763,7 +854,6 @@ Nodo expresionUnaria() :
       }
 }
 
-
 Nodo llamadaFuncion() :
 { 
     Token t;
@@ -796,11 +886,221 @@ Nodo llamadaFuncion() :
     { return n; }
 }
 
+Nodo nuevoArreglo() :
+{
+    Token t;
+    Nodo n;
+}
+{
+    t=<NEW> { mostrarToken(t); }
+
+    (
+          t=<INT>     { mostrarToken(t); }
+        | t=<BOOLEAN> { mostrarToken(t); }
+        | t=<STRING>  { mostrarToken(t); }
+        | t=<CHAR>    { mostrarToken(t); }
+        | t=<DOUBLE>  { mostrarToken(t); }
+        | t=<FLOAT>   { mostrarToken(t); }
+        | t=<LONG>    { mostrarToken(t); }
+        | t=<SHORT>   { mostrarToken(t); }
+        | t=<BYTE>    { mostrarToken(t); }
+    )
+
+    t=<CORCHETE_IZQ> { mostrarToken(t); }
+    t=<CORCHETE_DER> { mostrarToken(t); }
+
+    n=inicializadorArreglo()
+
+    {
+        return n;
+    }
+}
+
+Nodo inicializadorArreglo() :
+{
+    Token t;
+    Nodo n = new Nodo("arreglo");
+    Nodo elemento;
+}
+{
+    t=<LLAVE_IZQ> { mostrarToken(t); }
+
+    [
+        elemento=expresion() {
+            n.agregar(elemento);
+        }
+
+        (
+            t=<COMA> { mostrarToken(t); }
+
+            elemento=expresion() {
+                n.agregar(elemento);
+            }
+        )*
+    ]
+
+    t=<LLAVE_DER> { mostrarToken(t); }
+
+    { return n; }
+}
+
+Nodo operacionArreglo() :
+{
+    Token t;
+    String operacion;
+    Nodo n = new Nodo("operacionArreglo");
+}
+{
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        if (!"Array".equals(t.image)) {
+            throw new ParseException(
+                "Se esperaba Array para una operacion de arreglo."
+            );
+        }
+    }
+
+    t=<PUNTO> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        operacion = t.image;
+
+        if (!"Sort".equals(operacion)
+                && !"Reverse".equals(operacion)) {
+            throw new ParseException(
+                "Operacion de arreglo no soportada: " + operacion
+            );
+        }
+
+        n.atributo("operacion", operacion);
+    }
+
+    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n.valor = t.image;
+    }
+
+    t=<PARENTESIS_DER> { mostrarToken(t); }
+
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
+    { return n; }
+}
+
+Nodo busquedaIndiceArreglo() :
+{
+    Token t;
+    Nodo n = new Nodo("busquedaIndiceArreglo");
+    Nodo elemento;
+}
+{
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        if (!"Array".equals(t.image)) {
+            throw new ParseException("Se esperaba Array.");
+        }
+    }
+
+    t=<PUNTO> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        if (!"IndexOf".equals(t.image)) {
+            throw new ParseException(
+                "Se esperaba Array.IndexOf."
+            );
+        }
+    }
+
+    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n.valor = t.image;
+    }
+
+    t=<COMA> { mostrarToken(t); }
+
+    elemento=expresion()
+    {
+        n.agregar(elemento);
+    }
+
+    t=<PARENTESIS_DER> { mostrarToken(t); }
+
+    { return n; }
+}
+
+Nodo copiarArreglo() :
+{
+    Token t;
+    Nodo n = new Nodo("copiarArreglo");
+    Nodo cantidad;
+}
+{
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        if (!"Array".equals(t.image)) {
+            throw new ParseException("Se esperaba Array.");
+        }
+    }
+
+    t=<PUNTO> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        if (!"Copy".equals(t.image)) {
+            throw new ParseException(
+                "Se esperaba Array.Copy."
+            );
+        }
+    }
+
+    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n.atributo("origen", t.image);
+    }
+
+    t=<COMA> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n.atributo("destino", t.image);
+    }
+
+    t=<COMA> { mostrarToken(t); }
+
+    cantidad=expresion()
+    {
+        n.agregar(cantidad);
+    }
+
+    t=<PARENTESIS_DER> { mostrarToken(t); }
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
+    { return n; }
+}
 
 Nodo expresionPrimaria() :
 { Nodo n; Token t; }
 {
-      LOOKAHEAD(2) n=llamadaFuncion()
+    LOOKAHEAD(4) n=busquedaIndiceArreglo() { return n; }
+    | LOOKAHEAD(2) n=llamadaFuncion() { return n; }
       { return n; }
 
     | t=<CONSOLE> {
@@ -822,6 +1122,12 @@ Nodo expresionPrimaria() :
           return new Nodo("lecturaConsola");
       }
 
+    | n=nuevoArreglo()
+      { return n; }
+
+    | n=inicializadorArreglo()
+      { return n; }
+
     | n=valor()
       { return n; }
 
@@ -839,7 +1145,6 @@ Nodo expresionPrimaria() :
           return resultado;
       }
 }
-
 
 String operadorSumaResta() :
 { Token t; }
@@ -867,13 +1172,48 @@ String operadorAritmetico() :
 }
 
 Nodo valor() :
-{ Token t; Nodo n; }
 {
-      t=<IDENTIFICADOR> { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "identificador"); return n; }
-    | t=<NUMERO>         { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "numero"); return n; }
-    | t=<DECIMAL>        { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "decimal"); return n; }
-    | t=<CADENA>         { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "cadena"); return n; }
-    | t=<TRUE>           { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "true"); return n; }
-    | t=<FALSE>          { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "false"); return n; }
-    | t=<NULL>           { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "null"); return n; }
+    Token t;
+    Nodo n;
+    Nodo indice;
+}
+{
+      t=<IDENTIFICADOR> { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "identificador"); }
+
+      [
+          t=<CORCHETE_IZQ> { mostrarToken(t); }
+
+          indice=expresion()
+
+          t=<CORCHETE_DER> { mostrarToken(t); }
+
+          {
+              Nodo acceso = new Nodo("accesoArreglo", n.valor);
+              acceso.agregar(indice);
+              n = acceso;
+          }
+
+        |
+
+          t=<PUNTO> { mostrarToken(t); }
+
+          t=<IDENTIFICADOR> {
+              mostrarToken(t);
+
+              if (!"Length".equals(t.image)) {
+                  throw new ParseException(
+                      "Solo se admite la propiedad Length en esta version."
+                  );
+              }
+
+              n = new Nodo("propiedadArreglo", n.valor);
+          }
+      ]
+      { return n; }
+    | t=<NUMERO>    { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "numero"); return n; }
+    | t=<DECIMAL>   { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "decimal"); return n; }
+    | t=<CADENA>    { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "cadena"); return n; }
+    | t=<TRUE>      { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "true"); return n; }
+    | t=<FALSE>     { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "false"); return n; }
+    | t=<NULL>      { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "null"); return n; }
 }

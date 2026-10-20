@@ -55,87 +55,93 @@ public interface TraductorConstants {
   /** RegularExpression Id. */
   int INT = 26;
   /** RegularExpression Id. */
-  int BOOLEAN = 27;
+  int NEW = 27;
   /** RegularExpression Id. */
-  int STRING = 28;
+  int BOOLEAN = 28;
   /** RegularExpression Id. */
-  int CHAR = 29;
+  int STRING = 29;
   /** RegularExpression Id. */
-  int DOUBLE = 30;
+  int CHAR = 30;
   /** RegularExpression Id. */
-  int FLOAT = 31;
+  int DOUBLE = 31;
   /** RegularExpression Id. */
-  int LONG = 32;
+  int FLOAT = 32;
   /** RegularExpression Id. */
-  int SHORT = 33;
+  int LONG = 33;
   /** RegularExpression Id. */
-  int BYTE = 34;
+  int SHORT = 34;
   /** RegularExpression Id. */
-  int MENOR_IGUAL = 35;
+  int BYTE = 35;
   /** RegularExpression Id. */
-  int MAYOR_IGUAL = 36;
+  int COMENTARIO_LINEA = 36;
   /** RegularExpression Id. */
-  int IGUALDAD = 37;
+  int COMENTARIO_BLOQUE = 37;
   /** RegularExpression Id. */
-  int DIFERENTE = 38;
+  int MENOR_IGUAL = 38;
   /** RegularExpression Id. */
-  int MENOR = 39;
+  int MAYOR_IGUAL = 39;
   /** RegularExpression Id. */
-  int MAYOR = 40;
+  int IGUALDAD = 40;
   /** RegularExpression Id. */
-  int SUMA_ASIGNACION = 41;
+  int DIFERENTE = 41;
   /** RegularExpression Id. */
-  int RESTA_ASIGNACION = 42;
+  int MENOR = 42;
   /** RegularExpression Id. */
-  int SUMA = 43;
+  int MAYOR = 43;
   /** RegularExpression Id. */
-  int RESTA = 44;
+  int SUMA_ASIGNACION = 44;
   /** RegularExpression Id. */
-  int MULT = 45;
+  int RESTA_ASIGNACION = 45;
   /** RegularExpression Id. */
-  int DIV = 46;
+  int SUMA = 46;
   /** RegularExpression Id. */
-  int MOD = 47;
+  int RESTA = 47;
   /** RegularExpression Id. */
-  int ASIGNACION = 48;
+  int MULT = 48;
   /** RegularExpression Id. */
-  int INCREMENTO = 49;
+  int DIV = 49;
   /** RegularExpression Id. */
-  int DECREMENTO = 50;
+  int MOD = 50;
   /** RegularExpression Id. */
-  int AND_LOGICO = 51;
+  int ASIGNACION = 51;
   /** RegularExpression Id. */
-  int OR_LOGICO = 52;
+  int INCREMENTO = 52;
   /** RegularExpression Id. */
-  int NOT_LOGICO = 53;
+  int DECREMENTO = 53;
   /** RegularExpression Id. */
-  int PARENTESIS_IZQ = 54;
+  int AND_LOGICO = 54;
   /** RegularExpression Id. */
-  int PARENTESIS_DER = 55;
+  int OR_LOGICO = 55;
   /** RegularExpression Id. */
-  int LLAVE_IZQ = 56;
+  int NOT_LOGICO = 56;
   /** RegularExpression Id. */
-  int LLAVE_DER = 57;
+  int PARENTESIS_IZQ = 57;
   /** RegularExpression Id. */
-  int CORCHETE_IZQ = 58;
+  int PARENTESIS_DER = 58;
   /** RegularExpression Id. */
-  int CORCHETE_DER = 59;
+  int LLAVE_IZQ = 59;
   /** RegularExpression Id. */
-  int PUNTO_Y_COMA = 60;
+  int LLAVE_DER = 60;
   /** RegularExpression Id. */
-  int DOS_PUNTOS = 61;
+  int CORCHETE_IZQ = 61;
   /** RegularExpression Id. */
-  int COMA = 62;
+  int CORCHETE_DER = 62;
   /** RegularExpression Id. */
-  int PUNTO = 63;
+  int PUNTO_Y_COMA = 63;
   /** RegularExpression Id. */
-  int DECIMAL = 64;
+  int DOS_PUNTOS = 64;
   /** RegularExpression Id. */
-  int NUMERO = 65;
+  int COMA = 65;
   /** RegularExpression Id. */
-  int CADENA = 66;
+  int PUNTO = 66;
   /** RegularExpression Id. */
-  int IDENTIFICADOR = 67;
+  int DECIMAL = 67;
+  /** RegularExpression Id. */
+  int NUMERO = 68;
+  /** RegularExpression Id. */
+  int CADENA = 69;
+  /** RegularExpression Id. */
+  int IDENTIFICADOR = 70;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -169,6 +175,7 @@ public interface TraductorConstants {
     "\"foreach\"",
     "\"in\"",
     "\"int\"",
+    "\"new\"",
     "\"boolean\"",
     "\"string\"",
     "\"char\"",
@@ -177,6 +184,8 @@ public interface TraductorConstants {
     "\"long\"",
     "\"short\"",
     "\"byte\"",
+    "<COMENTARIO_LINEA>",
+    "<COMENTARIO_BLOQUE>",
     "\"<=\"",
     "\">=\"",
     "\"==\"",

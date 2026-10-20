@@ -34,7 +34,17 @@ public class GeneradorPython {
 
     private String generarInstruccion(Nodo n, int nivel) {
         switch (n.tipo) {
+            case "comentario": return generarComentario(n, nivel);
             case "declaracionVariable": return generarDeclaracion(n, nivel);
+            case "declaracionesMultiples": StringBuilder declaraciones = new StringBuilder();
+                for (Nodo variable : n.hijos) {
+                    declaraciones.append(
+                        generarDeclaracion(variable, nivel)
+                    );
+                }
+                return declaraciones.toString();
+            case "operacionArreglo":    return generarOperacionArreglo(n, nivel);
+            case "copiarArreglo":       return generarCopiarArreglo(n, nivel);
             case "asignacion":          return generarAsignacion(n, nivel);
             case "asignacionSimple":    return generarAsignacion(n, nivel);
             case "incrementoDecremento": return generarIncrementoDecremento(n, nivel);
@@ -53,40 +63,78 @@ public class GeneradorPython {
                 return tab(nivel) + "# TODO: nodo no soportado aun -> " + n.tipo + "\n";
         }
     }
+    
+    private String generarComentario(Nodo n, int nivel) {
+        String comentario = n.valor;
+
+        if (comentario.startsWith("//")) {
+            return tab(nivel)
+                    + "#"
+                    + comentario.substring(2)
+                    + "\n";
+        }
+
+        if (comentario.startsWith("/*")
+                && comentario.endsWith("*/")) {
+
+            String contenido = comentario.substring(
+                    2, comentario.length() - 2
+            );
+
+            String[] lineas = contenido.split("\\R", -1);
+            StringBuilder resultado = new StringBuilder();
+
+            for (String linea : lineas) {
+                resultado.append(tab(nivel))
+                        .append("#")
+                        .append(linea.isEmpty() ? "" : " " + linea.stripLeading())
+                        .append("\n");
+            }
+
+            return resultado.toString();
+        }
+
+        return tab(nivel) + "# " + comentario + "\n";
+    }
 
     private String generarDeclaracion(Nodo n, int nivel) {
         String nombre = n.valor;
+        String tipoDato = n.atributoPorDefecto("tipoDato", "");
+
         if (!n.hijos.isEmpty()) {
-            return tab(nivel) + nombre + " = " + generarExpr(n.hijo(0)) + "\n";
+            return tab(nivel) + nombre + " = "
+                    + generarExpr(n.hijo(0)) + "\n";
         }
-        // sin valor inicial -> usar un valor por defecto según el tipo de C#
-        String valorDefault = switch (n.atributoPorDefecto("tipoDato", "")) {
+
+        String valorDefault = switch (tipoDato) {
             case "int", "long", "short", "byte" -> "0";
             case "double", "float" -> "0.0";
             case "boolean" -> "False";
             case "string" -> "\"\"";
             case "char" -> "''";
-            default -> "None";
+            default -> tipoDato.endsWith("[]") ? "[]" : "None";
         };
+
         return tab(nivel) + nombre + " = " + valorDefault + "\n";
     }
     
-    
     private String generarAsignacion(Nodo n, int nivel) {
         String operador = n.atributoPorDefecto(
-            "operadorAsignacion", "="
-        );
+                "operadorAsignacion", "=");
 
-        if ("++".equals(operador)) {
-            return tab(nivel) + n.valor + " += 1\n";
+        String destino;
+        Nodo expresion;
+
+        if ("true".equals(n.atributo("asignacionArreglo"))) {
+            destino = n.valor + "[" + generarExpr(n.hijo(0)) + "]";
+            expresion = n.hijo(1);
+        } else {
+            destino = n.valor;
+            expresion = n.hijo(0);
         }
 
-        if ("--".equals(operador)) {
-            return tab(nivel) + n.valor + " -= 1\n";
-        }
-
-        return tab(nivel) + n.valor + " " + operador + " "
-                + generarExpr(n.hijo(0)) + "\n";
+        return tab(nivel) + destino + " " + operador + " "
+                + generarExpr(expresion) + "\n";
     }
 
     private String generarIncrementoDecremento(Nodo n, int nivel) {
@@ -165,16 +213,12 @@ public class GeneradorPython {
         Nodo cuerpo = n.hijo(3);
 
         StringBuilder sb = new StringBuilder();
-
+        
         // Inicialización: puede estar vacía.
         if (init != null && !"sinInicializacion".equals(init.tipo)) {
-            if ("declaracionVariable".equals(init.tipo)) {
-                sb.append(generarDeclaracion(init, nivel));
-            } else {
-                sb.append(generarAsignacion(init, nivel));
-            }
+            sb.append(generarInstruccion(init, nivel));
         }
-
+       
         // Condición del ciclo.
         sb.append(tab(nivel))
           .append("while ")
@@ -302,10 +346,13 @@ public class GeneradorPython {
         if (bloque == null || bloque.hijos.isEmpty()) {
             return tab(nivel) + "pass\n";
         }
+        
         StringBuilder sb = new StringBuilder();
+        
         for (Nodo inst : bloque.hijos) {
             sb.append(generarInstruccion(inst, nivel));
         }
+        
         return sb.toString();
     }
 
@@ -338,6 +385,41 @@ public class GeneradorPython {
             return llamada.toString();
         }
         
+        // Array.IndexOf(arreglo, elemento)
+        if ("busquedaIndiceArreglo".equals(n.tipo)) {
+            String arreglo = n.valor;
+            String elemento = generarExpr(n.hijo(0));
+
+            return arreglo + ".index(" + elemento + ")"
+                    + " if " + elemento + " in " + arreglo
+                    + " else -1";
+        }
+
+        // Arreglo literal: {10, 20, 30} -> [10, 20, 30]
+        if ("arreglo".equals(n.tipo)) {
+            StringBuilder sb = new StringBuilder("[");
+
+            for (int i = 0; i < n.hijos.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+                sb.append(generarExpr(n.hijo(i)));
+            }
+
+            sb.append("]");
+            return sb.toString();
+        }
+
+        // Acceso por índice: numeros[0]
+        if ("accesoArreglo".equals(n.tipo)) {
+            return n.valor + "[" + generarExpr(n.hijo(0)) + "]";
+        }
+
+        // Propiedad Length: numeros.Length -> len(numeros)
+        if ("propiedadArreglo".equals(n.tipo)) {
+            return "len(" + n.valor + ")";
+        }
+
         // Valor simple
         if (n.tipo.equals("valor")) {
             return generarValor(n);
@@ -383,7 +465,7 @@ public class GeneradorPython {
         }
 
         return "";
-}
+    }
 
     private String generarValor(Nodo v) {
         String tipo = v.atributo("tipoValor");
@@ -402,5 +484,30 @@ public class GeneradorPython {
             return "\"" + lexema.substring(1, lexema.length() - 1) + "\"";
         }
         return lexema;
+    }
+    
+    private String generarOperacionArreglo(Nodo n, int nivel) {
+        String nombreArreglo = n.valor;
+        String operacion = n.atributo("operacion");
+
+        if ("Sort".equals(operacion)) {
+            return tab(nivel) + nombreArreglo + ".sort()\n";
+        }
+
+        if ("Reverse".equals(operacion)) {
+            return tab(nivel) + nombreArreglo + ".reverse()\n";
+        }
+
+        return tab(nivel) + "# Operacion de arreglo no soportada\n";
+    }
+    
+    private String generarCopiarArreglo(Nodo n, int nivel) {
+        String origen = n.atributo("origen");
+        String destino = n.atributo("destino");
+        String cantidad = generarExpr(n.hijo(0));
+
+        return tab(nivel) + destino + "[:"
+                + cantidad + "] = "
+                + origen + "[:" + cantidad + "]\n";
     }
 }
