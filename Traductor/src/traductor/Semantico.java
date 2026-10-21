@@ -26,7 +26,11 @@ public class Semantico {
             tablaVariables.put(nombre, tipo);
         }
     }
-
+    
+    public static String obtenerTipoVariable(String nombre) {
+        return tablaVariables.get(nombre);
+    }
+    
     /**
      * Validación mínima: no permite mezclar cadenas con operadores aritméticos
      * distintos de '+' (concatenación). Ajusta las reglas según lo que

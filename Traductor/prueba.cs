@@ -1,3 +1,2 @@
-for (bool activo = true; activo == true; activo = false) {
-    Console.WriteLine(activo);
-}
+int precio = 10;
+Console.WriteLine("Total: " + (precio + 5));

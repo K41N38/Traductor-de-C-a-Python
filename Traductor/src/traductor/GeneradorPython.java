@@ -522,17 +522,41 @@ public class GeneradorPython {
 
         // Expresión con dos operandos
         if (n.hijos.size() == 2 && op != null) {
-            String izquierda = generarExpr(n.hijo(0));
-            String derecha = generarExpr(n.hijo(1));
+            Nodo nodoIzquierdo = n.hijo(0);
+            Nodo nodoDerecho = n.hijo(1);
+
+            String izquierda = generarExpr(nodoIzquierdo);
+            String derecha = generarExpr(nodoDerecho);
 
             String operador = op;
 
-            // Operadores lógicos de C# a Python
-            if ("&&".equals(operador)) {
-                operador = "and";
-            } else if ("||".equals(operador)) {
-                operador = "or";
+            String tipoIzquierdo = inferirTipoExpr(nodoIzquierdo);
+            String tipoDerecho = inferirTipoExpr(nodoDerecho);
+
+            // Concatenación de cadenas.
+            if ("+".equals(operador)) {
+                if ("cadena".equals(tipoIzquierdo)
+                        || "cadena".equals(tipoDerecho)) {
+
+                    if (!"cadena".equals(tipoIzquierdo)) {
+                        izquierda = "str(" + izquierda + ")";
+                    }
+
+                    if (!"cadena".equals(tipoDerecho)) {
+                        derecha = "str(" + derecha + ")";
+                    }
+                }
             }
+
+            // División entera: conserva el comportamiento de C#.
+            if ("/".equals(operador)
+                    && "int".equals(tipoIzquierdo)
+                    && "int".equals(tipoDerecho)) {
+                return "int(" + izquierda + " / " + derecha + ")";
+            }
+
+            if ("&&".equals(operador)) operador = "and";
+            else if ("||".equals(operador)) operador = "or";
 
             return izquierda + " " + operador + " " + derecha;
         }
@@ -545,6 +569,104 @@ public class GeneradorPython {
         return "";
     }
 
+    /** Determina el tipo de una expresión para generar operaciones compatibles con Python. */
+    private String inferirTipoExpr(Nodo n) {
+        if (n == null) {
+            return null;
+        }
+
+        // Literales e identificadores.
+        if ("valor".equals(n.tipo)) {
+            String tipoValor = n.atributo("tipoValor");
+
+            if ("cadena".equals(tipoValor)) {
+                return "cadena";
+            }
+            if ("true".equals(tipoValor) || "false".equals(tipoValor)) {
+                return "bool";
+            }
+            if ("null".equals(tipoValor)) {
+                return "null";
+            }
+            if ("decimal".equals(tipoValor)) {
+                return "decimal";
+            }
+            if ("numero".equals(tipoValor)) {
+                return "int";
+            }
+
+            // Si es un identificador, consultar el tipo declarado.
+            String tipoVariable = Semantico.obtenerTipoVariable(n.valor);
+
+            if (tipoVariable != null) {
+                return normalizarTipo(tipoVariable);
+            }
+
+            // Compatibilidad con nodos numéricos que no tengan tipoValor.
+            if (n.valor != null) {
+                if (n.valor.matches("\\d+")) {
+                    return "int";
+                }
+                if (n.valor.matches("\\d+\\.\\d+")) {
+                    return "decimal";
+                }
+            }
+
+            return null;
+        }
+
+        if ("agrupacion".equals(n.tipo)) {
+            return inferirTipoExpr(n.hijo(0));
+        }
+
+        String operador = n.atributo("operador");
+
+        if (n.hijos.size() == 2 && operador != null) {
+            String tipoIzq = inferirTipoExpr(n.hijo(0));
+            String tipoDer = inferirTipoExpr(n.hijo(1));
+
+            if ("+".equals(operador)
+                    && ("cadena".equals(tipoIzq) || "cadena".equals(tipoDer))) {
+                return "cadena";
+            }
+
+            if ("&&".equals(operador) || "||".equals(operador)
+                    || "==".equals(operador) || "!=".equals(operador)
+                    || "<".equals(operador) || ">".equals(operador)
+                    || "<=".equals(operador) || ">=".equals(operador)) {
+                return "bool";
+            }
+
+            if ("+".equals(operador) || "-".equals(operador)
+                    || "*".equals(operador) || "/".equals(operador)
+                    || "%".equals(operador)) {
+                if ("decimal".equals(tipoIzq) || "decimal".equals(tipoDer)) {
+                    return "decimal";
+                }
+                if ("int".equals(tipoIzq) && "int".equals(tipoDer)) {
+                    return "int";
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /** Unifica nombres de tipos para las comprobaciones internas. */
+    private String normalizarTipo(String tipo) {
+        if (tipo == null) {
+            return null;
+        }
+
+        return switch (tipo.toLowerCase(Locale.ROOT)) {
+            case "string", "cadena", "char" -> "cadena";
+            case "int", "long", "short", "byte" -> "int";
+            case "double", "float", "decimal" -> "decimal";
+            case "bool", "boolean" -> "bool";
+            default -> tipo;
+        };
+    }
+    
     private String generarValor(Nodo v) {
         String tipo = v.atributo("tipoValor");
         return switch (tipo == null ? "" : tipo) {

@@ -1,4 +1,2 @@
-activo = True
-while activo == True:
-    print(activo)
-    activo = False
+precio = 10
+print("Total: " + str((precio + 5)))
