@@ -18,16 +18,20 @@ public class GeneradorPython {
     private static final String INDENT = "    ";
     // Permite distinguir si un break pertenece a un ciclo o a un switch.
     private final Deque<String> contextosRuptura = new ArrayDeque<>();
+    // Guarda la actualización correspondiente al ciclo donde aparece continue.
+    private final Deque<String> actualizacionesContinue = new ArrayDeque<>();
 
     public String generar(Nodo raiz) {
         contextosRuptura.clear();
+        actualizacionesContinue.clear();
+
         StringBuilder sb = new StringBuilder();
         for (Nodo hijo : raiz.hijos) {
             sb.append(generarInstruccion(hijo, 0));
         }
         return sb.toString();
     }
-
+    
     private String tab(int nivel) {
         return INDENT.repeat(Math.max(0, nivel));
     }
@@ -56,7 +60,7 @@ public class GeneradorPython {
             case "cicloMientras":       return generarMientras(n, nivel);
             case "cicloForeach":        return generarForeach(n, nivel);
             case "breakInstruccion":    return generarBreak(nivel);
-            case "continueInstruccion": return tab(nivel) + "continue\n";
+            case "continueInstruccion": return generarContinue(nivel);
             case "returnInstruccion":   return tab(nivel) + "return" + (n.hijos.isEmpty() ? "" : " " + generarExpr(n.hijo(0))) + "\n";
             case "bloque":              return generarBloque(n, nivel);
             default:
@@ -137,6 +141,24 @@ public class GeneradorPython {
                 + generarExpr(expresion) + "\n";
     }
 
+    private String generarContinue(int nivel) {
+        StringBuilder sb = new StringBuilder();
+
+        if (!actualizacionesContinue.isEmpty()) {
+            String actualizacion = actualizacionesContinue.peek();
+
+            if (!actualizacion.isEmpty()) {
+                sb.append(tab(nivel))
+                  .append(actualizacion)
+                  .append("\n");
+            }
+        }
+
+        sb.append(tab(nivel)).append("continue\n");
+
+        return sb.toString();
+    }
+    
     private String generarIncrementoDecremento(Nodo n, int nivel) {
         String operador = n.atributoPorDefecto("operador", "");
 
@@ -152,15 +174,32 @@ public class GeneradorPython {
     }
     
     private String generarMientras(Nodo n, int nivel) {
-        return tab(nivel)
-                + "while " + generarExpr(n.hijo(0)) + ":\n"
-                + generarBloqueConContexto(n.hijo(1), nivel + 1, "ciclo");
+        actualizacionesContinue.push("");
+
+        try {
+            return tab(nivel)
+                    + "while " + generarExpr(n.hijo(0)) + ":\n"
+                    + generarBloqueConContexto(
+                        n.hijo(1), nivel + 1, "ciclo"
+                    );
+        } finally {
+            actualizacionesContinue.pop();
+        }
     }
 
     private String generarForeach(Nodo n, int nivel) {
-        return tab(nivel)
-                + "for " + n.valor + " in " + n.atributo("coleccion") + ":\n"
-                + generarBloqueConContexto(n.hijo(0), nivel + 1, "ciclo");
+        actualizacionesContinue.push("");
+
+        try {
+            return tab(nivel)
+                    + "for " + n.valor + " in "
+                    + n.atributo("coleccion") + ":\n"
+                    + generarBloqueConContexto(
+                        n.hijo(0), nivel + 1, "ciclo"
+                    );
+        } finally {
+            actualizacionesContinue.pop();
+        }
     }
 
     private String generarBreak(int nivel) {
@@ -213,27 +252,60 @@ public class GeneradorPython {
         Nodo cuerpo = n.hijo(3);
 
         StringBuilder sb = new StringBuilder();
-        
+
         // Inicialización: puede estar vacía.
         if (init != null && !"sinInicializacion".equals(init.tipo)) {
             sb.append(generarInstruccion(init, nivel));
         }
-       
+
+        // Preparar la actualización del ciclo.
+        String actualizacion = obtenerActualizacionPara(upd);
+
         // Condición del ciclo.
         sb.append(tab(nivel))
           .append("while ")
           .append(generarExpr(cond))
           .append(":\n");
 
-        // Cuerpo del ciclo.
-        sb.append(
-            generarBloqueConContexto(cuerpo, nivel + 1, "ciclo")
-        );
+        // El continue de este ciclo debe ejecutar su actualización.
+        actualizacionesContinue.push(actualizacion);
 
-        // Actualización: conserva =, +=, -=, ++ o --.
-        sb.append(generarAsignacion(upd, nivel + 1));
+        try {
+            sb.append(
+                generarBloqueConContexto(cuerpo, nivel + 1, "ciclo")
+            );
+        } finally {
+            actualizacionesContinue.pop();
+        }
+
+        // Actualización normal, al terminar el cuerpo.
+        sb.append(tab(nivel + 1))
+          .append(actualizacion)
+          .append("\n");
 
         return sb.toString();
+    }
+
+    private String obtenerActualizacionPara(Nodo n) {
+        if (n == null) {
+            return "";
+        }
+
+        String operador = n.atributoPorDefecto(
+            "operadorAsignacion", "="
+        );
+
+        if ("++".equals(operador)) {
+            return n.valor + " += 1";
+        }
+
+        if ("--".equals(operador)) {
+            return n.valor + " -= 1";
+        }
+
+        Nodo expresion = n.hijo(0);
+
+        return n.valor + " " + operador + " " + generarExpr(expresion);
     }
     
     private String generarDoWhile(Nodo n, int nivel) {
@@ -244,9 +316,15 @@ public class GeneradorPython {
 
         sb.append(tab(nivel)).append("while True:\n");
 
-        sb.append(
-            generarBloqueConContexto(cuerpo, nivel + 1, "ciclo")
-        );
+        actualizacionesContinue.push("");
+
+        try {
+            sb.append(
+                generarBloqueConContexto(cuerpo, nivel + 1, "ciclo")
+            );
+        } finally {
+            actualizacionesContinue.pop();
+        }
 
         sb.append(tab(nivel + 1))
           .append("if not (")
