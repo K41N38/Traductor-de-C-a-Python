@@ -104,6 +104,7 @@ TOKEN : {
 |   < IN: "in" >
 |   < INT: "int" >
 |   < NEW: "new" >
+|   < BOOL: "bool" >
 |   < BOOLEAN: "boolean" >
 |   < STRING: "string" >
 |   < CHAR: "char" >
@@ -239,6 +240,7 @@ Nodo declaracionVariable() :
 
     (
           t=<INT>     { mostrarToken(t); tipoDato = "int"; }
+        | t=<BOOL>    { mostrarToken(t); tipoDato = "bool"; }
         | t=<BOOLEAN> { mostrarToken(t); tipoDato = "boolean"; }
         | t=<STRING>  { mostrarToken(t); tipoDato = "string"; }
         | t=<CHAR>    { mostrarToken(t); tipoDato = "char"; }
@@ -300,6 +302,7 @@ Nodo declaracionVariableFor() :
 {
     (
           t=<INT>     { mostrarToken(t); tipoDato = "int"; }
+        | t=<BOOL>    { mostrarToken(t); tipoDato = "bool"; }
         | t=<BOOLEAN> { mostrarToken(t); tipoDato = "boolean"; }
         | t=<STRING>  { mostrarToken(t); tipoDato = "string"; }
         | t=<CHAR>    { mostrarToken(t); tipoDato = "char"; }
@@ -473,6 +476,7 @@ Nodo cicloForeach() :
     (
           t=<INT>     { mostrarToken(t); n.atributo("tipoDato", "int"); }
         | t=<STRING>  { mostrarToken(t); n.atributo("tipoDato", "string"); }
+        | t=<BOOL>    { mostrarToken(t); n.atributo("tipoDato", "bool"); }
         | t=<BOOLEAN> { mostrarToken(t); n.atributo("tipoDato", "boolean"); }
     )
     t=<IDENTIFICADOR> { mostrarToken(t); n.valor = t.image; }

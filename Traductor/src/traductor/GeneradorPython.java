@@ -113,7 +113,7 @@ public class GeneradorPython {
         String valorDefault = switch (tipoDato) {
             case "int", "long", "short", "byte" -> "0";
             case "double", "float" -> "0.0";
-            case "boolean" -> "False";
+            case "bool", "boolean" -> "False";
             case "string" -> "\"\"";
             case "char" -> "''";
             default -> tipoDato.endsWith("[]") ? "[]" : "None";
