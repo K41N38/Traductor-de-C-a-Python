@@ -83,6 +83,10 @@ SKIP : { " " | "\t" | "\n" | "\r" }
 TOKEN : {
     < IF: "if" >
 |   < ELSE: "else" >
+|   < TRY: "try" >
+|   < CATCH: "catch" >
+|   < FINALLY: "finally" >
+|   < THROW: "throw" >
 |   < WHILE: "while" >
 |   < FOR: "for" >
 |   < DO: "do" >
@@ -181,6 +185,8 @@ Nodo instruccion() :
         | LOOKAHEAD(2) n=asignacion()
         | LOOKAHEAD(2) n=incrementoDecremento()
         | LOOKAHEAD(2) n=condicion()
+        | LOOKAHEAD(2) n=manejoExcepciones()
+        | LOOKAHEAD(2) n=throwInstruccion()
         | LOOKAHEAD(2) n=cicloMientras()
         | LOOKAHEAD(2) n=cicloPara()
         | LOOKAHEAD(2) n=cicloDoWhile()
@@ -431,6 +437,125 @@ Nodo condicion() :
         t=<ELSE> { mostrarToken(t); n.atributo("tieneElse", "true"); }
         bElse=bloque() { n.agregar(bElse); }
     ]
+    { return n; }
+}
+
+
+ // ------------------------------------------------------
+ // EXCEPCIONES: TRY - CATCH - FINALLY
+ // ------------------------------------------------------
+
+Nodo manejoExcepciones() :
+{
+    Token t;
+    Nodo n = new Nodo("manejoExcepciones");
+    Nodo cuerpo;
+    Nodo captura;
+    boolean tieneCatch = false;
+    boolean tieneFinally = false;
+}
+{
+    t=<TRY> { mostrarToken(t); }
+
+    cuerpo=bloque() {
+        n.agregar(cuerpo);
+    }
+
+    (
+        captura=clausulaCatch() {
+            n.agregar(captura);
+            tieneCatch = true;
+        }
+    )*
+
+    [
+        t=<FINALLY> {
+            mostrarToken(t);
+            tieneFinally = true;
+            n.atributo("tieneFinally", "true");
+        }
+
+        cuerpo=bloque() {
+            n.agregar(cuerpo);
+        }
+    ]
+
+    {
+        if (!tieneCatch && !tieneFinally) {
+            throw new ParseException(
+                "Un bloque try debe tener catch o finally."
+            );
+        }
+
+        return n;
+    }
+}
+
+Nodo clausulaCatch() :
+{
+    Token t;
+    Nodo n = new Nodo("clausulaCatch");
+    Nodo cuerpo;
+    String tipoExcepcion = "";
+    String variableExcepcion = "";
+}
+{
+    t=<CATCH> { mostrarToken(t); }
+
+    [
+        t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
+        t=<IDENTIFICADOR> {
+            mostrarToken(t);
+            tipoExcepcion = t.image;
+        }
+
+        [
+            t=<IDENTIFICADOR> {
+                mostrarToken(t);
+                variableExcepcion = t.image;
+            }
+        ]
+
+        t=<PARENTESIS_DER> { mostrarToken(t); }
+    ]
+
+    {
+        if (!tipoExcepcion.isEmpty()) {
+            n.atributo("tipoExcepcion", tipoExcepcion);
+        }
+
+        if (!variableExcepcion.isEmpty()) {
+            n.atributo("variableExcepcion", variableExcepcion);
+        }
+    }
+
+    cuerpo=bloque() {
+        n.agregar(cuerpo);
+        return n;
+    }
+}
+
+// ------------------------------------------------------
+// LANZAMIENTO DE EXCEPCIONES: THROW
+// ------------------------------------------------------
+Nodo throwInstruccion() :
+{
+    Token t;
+    Nodo n = new Nodo("throwInstruccion");
+    Nodo exp;
+}
+{
+    t=<THROW> { mostrarToken(t); }
+
+    [
+        exp=expresion() {
+            n.agregar(exp);
+        }
+    ]
+
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
     { return n; }
 }
 

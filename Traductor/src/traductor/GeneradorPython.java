@@ -54,6 +54,7 @@ public class GeneradorPython {
             case "incrementoDecremento": return generarIncrementoDecremento(n, nivel);
             case "condicion":           return generarCondicion(n, nivel);
             case "cicloPara":           return generarPara(n, nivel);
+            case "manejoExcepciones":   return generarManejoExcepciones(n, nivel);
             case "cicloDoWhile":        return generarDoWhile(n, nivel);
             case "estructuraSwitch":    return generarSwitch(n, nivel);
             case "escritura":           return tab(nivel) + "print(" + generarExpr(n.hijo(0)) + ")\n";
@@ -306,6 +307,71 @@ public class GeneradorPython {
         Nodo expresion = n.hijo(0);
 
         return n.valor + " " + operador + " " + generarExpr(expresion);
+    }
+    
+    private String generarManejoExcepciones(Nodo n, int nivel) {
+        StringBuilder sb = new StringBuilder();
+
+        Nodo cuerpoTry = n.hijo(0);
+
+        sb.append(tab(nivel)).append("try:\n");
+        sb.append(generarBloque(cuerpoTry, nivel + 1));
+
+        boolean tieneCatch = false;
+        boolean tieneFinally =
+                "true".equals(n.atributo("tieneFinally"));
+
+        for (int i = 1; i < n.hijos.size(); i++) {
+            Nodo hijo = n.hijo(i);
+
+            if ("clausulaCatch".equals(hijo.tipo)) {
+                tieneCatch = true;
+
+                String tipoExcepcion =
+                        hijo.atributo("tipoExcepcion");
+                String variableExcepcion =
+                        hijo.atributo("variableExcepcion");
+
+                String tipoPython =
+                        convertirTipoExcepcion(tipoExcepcion);
+
+                sb.append(tab(nivel))
+                  .append("except ")
+                  .append(tipoPython);
+
+                if (variableExcepcion != null
+                        && !variableExcepcion.isEmpty()) {
+                    sb.append(" as ").append(variableExcepcion);
+                }
+
+                sb.append(":\n");
+                sb.append(generarBloque(hijo.hijo(0), nivel + 1));
+            } else if ("bloque".equals(hijo.tipo) && tieneFinally) {
+                sb.append(tab(nivel)).append("finally:\n");
+                sb.append(generarBloque(hijo, nivel + 1));
+            }
+        }
+
+        return sb.toString();
+    }
+
+    private String convertirTipoExcepcion(String tipoCSharp) {
+        if (tipoCSharp == null || tipoCSharp.isEmpty()) {
+            return "Exception";
+        }
+
+        return switch (tipoCSharp) {
+            case "Exception" -> "Exception";
+            case "ArithmeticException", "DivideByZeroException" ->
+                "ArithmeticError";
+            case "FormatException", "InvalidCastException" ->
+                "ValueError";
+            case "IndexOutOfRangeException" ->
+                "IndexError";
+            case "NullReferenceException" ->
+                "AttributeError";
+            default -> "Exception";
+        };
     }
     
     private String generarDoWhile(Nodo n, int nivel) {
