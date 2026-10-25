@@ -1,14 +1,6 @@
 package traductor;
 import java.util.*;
 
-/**
- * RECONSTRUIDA a partir del uso que hace Analizador.jj:
- *   Semantico.limpiar(), Semantico.declararVariable(nombre, tipo),
- *   Semantico.validarOperacionAritmetica(tipo1, tipo2, operador),
- *   Semantico.hayErrores(), Semantico.imprimirErrores(), Semantico.error(msg)
- * Si ya tienes tu propia versión original, reemplaza este archivo por el tuyo
- * (revisa que los nombres de método coincidan con lo que llama tu .jj real).
- */
 public class Semantico {
 
     private static List<String> errores = new ArrayList<>();
@@ -269,6 +261,40 @@ public class Semantico {
     }
     
     /**
+    * Valida que los elementos de un arreglo sean compatibles
+    * con el tipo de dato declarado.
+    */
+   private static void validarElementosArreglo(
+           String tipoEsperado, Nodo arreglo, String nombreVariable) {
+
+       if (tipoEsperado == null || arreglo == null
+               || !"arreglo".equals(arreglo.tipo)
+               || !tipoEsperado.endsWith("[]")) {
+           return;
+       }
+
+       // Obtiene el tipo de los elementos, por ejemplo:
+       // int[] -> int; string[] -> string.
+       String tipoElemento = tipoEsperado.substring(
+           0, tipoEsperado.length() - 2
+       );
+
+       for (int i = 0; i < arreglo.hijos.size(); i++) {
+           Nodo elemento = arreglo.hijo(i);
+           String tipoRecibido = inferirTipo(elemento);
+
+           if (!tiposCompatibles(tipoElemento, tipoRecibido)) {
+               error(
+                   "El elemento " + (i + 1) + " del arreglo '"
+                   + nombreVariable + "' es de tipo '"
+                   + tipoRecibido + "', pero se esperaba '"
+                   + tipoElemento + "'."
+               );
+           }
+       }
+   }
+    
+    /**
      * Valida los tipos de las declaraciones y asignaciones.
      */
     private static void validarTipos(Nodo nodo) {
@@ -289,6 +315,12 @@ public class Semantico {
                         + "' es de tipo '" + tipoEsperado
                         + "', pero recibe un valor de tipo '"
                         + tipoRecibido + "'.");
+                } else if (tipoEsperado.endsWith("[]")
+                        && "arreglo".equals(tipoRecibido)) {
+
+                    validarElementosArreglo(
+                        tipoEsperado, inicializador, nodo.valor
+                    );
                 }
             }
         }
@@ -310,17 +342,23 @@ public class Semantico {
 
                     String tipoRecibido = inferirTipo(valorAsignado);
 
-                    // La comprobación de arreglos se ampliará
-                    // en un paso posterior.
-                    if (tipoEsperado != null
-                            && !tipoEsperado.endsWith("[]")
-                            && !tiposCompatibles(
-                                tipoEsperado, tipoRecibido)) {
+                    if (tipoEsperado != null) {
+                        if (tipoEsperado.endsWith("[]")
+                                && "arreglo".equals(tipoRecibido)) {
 
-                        error("No se puede asignar un valor de tipo '"
-                            + tipoRecibido + "' a la variable '"
-                            + nodo.valor + "' de tipo '"
-                            + tipoEsperado + "'.");
+                            validarElementosArreglo(
+                                tipoEsperado, valorAsignado, nodo.valor
+                            );
+
+                        } else if (!tipoEsperado.endsWith("[]")
+                                && !tiposCompatibles(
+                                    tipoEsperado, tipoRecibido)) {
+
+                            error("No se puede asignar un valor de tipo '"
+                                + tipoRecibido + "' a la variable '"
+                                + nodo.valor + "' de tipo '"
+                                + tipoEsperado + "'.");
+                        }
                     }
                 }
             }
@@ -450,6 +488,11 @@ public class Semantico {
         }
 
         if (esperado.equals(recibido)) {
+            return true;
+        }
+
+        // Permitir arreglos literales en variables de tipo arreglo.
+        if (esperado.endsWith("[]") && "arreglo".equals(recibido)) {
             return true;
         }
 
@@ -593,8 +636,8 @@ public class Semantico {
             return;
         }
 
-        // Las condiciones se evalúan; las ramas se analizan
-        // por separado para no asumir que ambas se ejecutan.
+        // Las condiciones se evalúan y sus ramas se analizan
+        // por separado para combinar correctamente sus resultados.
         if ("condicion".equals(nodo.tipo)) {
             validarUsosExpresion(
                 nodo.hijo(0), inicializadas
@@ -614,7 +657,17 @@ public class Semantico {
                 validarInicializacion(
                     nodo.hijo(2), estadoElse
                 );
+
+                // Una variable queda inicializada después del if/else
+                // solamente si lo está en ambas ramas.
+                estadoIf.retainAll(estadoElse);
+
+                inicializadas.clear();
+                inicializadas.addAll(estadoIf);
             }
+
+            // Sin else, se conserva el estado anterior:
+            // la rama if podría no ejecutarse.
             return;
         }
 
@@ -662,13 +715,20 @@ public class Semantico {
                 Set<String> estadoCiclo =
                     new HashSet<String>(inicializadas);
 
+                // El cuerpo se ejecuta al menos una vez.
                 validarInicializacion(
                     nodo.hijo(0), estadoCiclo
                 );
 
+                // La condición se evalúa después del cuerpo.
                 validarUsosExpresion(
                     nodo.hijo(1), estadoCiclo
                 );
+
+                // Conserva las variables inicializadas por el cuerpo.
+                inicializadas.clear();
+                inicializadas.addAll(estadoCiclo);
+
                 return;
             }
 
