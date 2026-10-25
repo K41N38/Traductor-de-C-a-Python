@@ -261,7 +261,6 @@
                     if (!(edad >= 18 && activo))
                     {
                         Console.WriteLine("Acceso denegado final");
-                        return;
                     }
                 }
                 catch (Exception)

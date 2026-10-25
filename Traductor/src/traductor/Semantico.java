@@ -56,4 +56,34 @@ public class Semantico {
             System.out.println("  ✗ " + e);
         }
     }
+    
+    /**
+     * Valida el uso de return dentro del árbol sintáctico.
+     * Por ahora, el traductor trabaja con fragmentos de código
+     * y no se ha confirmado soporte para funciones o métodos.
+     */
+    public static void validarPrograma(Nodo raiz) {
+        validarRetornos(raiz, false);
+    }
+
+    /**
+     * Recorre recursivamente el AST para detectar return fuera
+     * de una función o método.
+     */
+    private static void validarRetornos(Nodo nodo, boolean dentroFuncion) {
+        if (nodo == null) {
+            return;
+        }
+
+        if ("returnInstruccion".equals(nodo.tipo) && !dentroFuncion) {
+            error(
+                "La instrucción 'return' aparece fuera de una función "
+                + "o método. No se puede traducir como código independiente."
+            );
+        }
+
+        for (Nodo hijo : nodo.hijos) {
+            validarRetornos(hijo, dentroFuncion);
+        }
+    }
 }

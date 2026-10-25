@@ -142,7 +142,6 @@ if puntuacion > 50:
             print("Puntuación final: " + str(finalScore))
             if not (edad >= 18 and activo):
                 print("Acceso denegado final")
-                return
         except Exception:
             print("Error cálculo final")
         k += 1

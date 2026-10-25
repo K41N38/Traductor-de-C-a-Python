@@ -165,7 +165,7 @@ class Program
                                 {
                                     Console.WriteLine("Puntuación media");
 
-                                    for (int i = 0; i < 2; i++)
+                                    for (int j = 0; j < 2; j++)
                                     {
                                         Console.WriteLine("Optimizando...");
                                     }
@@ -222,8 +222,8 @@ class Program
                                 {
                                     case 3:
                                     {
-                                        int calculo = (num * 10) + (edad / 5);
-                                        Console.WriteLine("Cálculo 3: " + calculo);
+                                        int calculoo = (num * 10) + (edad / 5);
+                                        Console.WriteLine("Cálculo 3: " + calculoo);
                                         break;
                                     }
 
@@ -367,7 +367,7 @@ class Program
         {
             Console.WriteLine("Resultado satisfactorio");
 
-            for (int i = 0; i < 2; i++)
+            for (int k = 0; k < 2; k++)
             {
                 try
                 {

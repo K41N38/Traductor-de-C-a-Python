@@ -64,6 +64,9 @@ public class Main {
                                 new StringReader(textoCompleto));
 
                 Nodo raiz = parser.programa();
+                
+                // Validaciones semánticas sobre el árbol sintáctico.
+                Semantico.validarPrograma(raiz);
 
                 System.out.println(
                         "\n========== RESULTADO DEL ANALISIS ==========");
