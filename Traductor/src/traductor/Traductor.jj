@@ -1225,12 +1225,53 @@ Nodo copiarArreglo() :
     { return n; }
 }
 
-Nodo expresionPrimaria() :
-{ Nodo n; Token t; }
+Nodo nuevaExcepcion() :
 {
-    LOOKAHEAD(4) n=busquedaIndiceArreglo() { return n; }
-    | LOOKAHEAD(2) n=llamadaFuncion() { return n; }
-      { return n; }
+    Token t;
+    Nodo n = new Nodo("nuevaExcepcion");
+    Nodo argumento;
+}
+{
+    t=<NEW> { mostrarToken(t); }
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+        n.atributo("tipo", t.image);
+    }
+    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+    [
+        argumento=expresion() {
+            n.agregar(argumento);
+        }
+        (
+            t=<COMA> { mostrarToken(t); }
+            argumento=expresion() {
+                n.agregar(argumento);
+            }
+        )*
+    ]
+    t=<PARENTESIS_DER> { mostrarToken(t); }
+    {
+        return n;
+    }
+}
+
+Nodo expresionPrimaria() :
+{
+    Nodo n;
+    Token t;
+}
+{
+    LOOKAHEAD(4)
+    n=busquedaIndiceArreglo()
+    {
+        return n;
+    }
+
+    | LOOKAHEAD(2)
+      n=llamadaFuncion()
+      {
+          return n;
+      }
 
     | t=<CONSOLE> {
           mostrarToken(t);
@@ -1251,27 +1292,60 @@ Nodo expresionPrimaria() :
           return new Nodo("lecturaConsola");
       }
 
+    | LOOKAHEAD(<NEW> <IDENTIFICADOR> <PARENTESIS_IZQ>)
+      n=nuevaExcepcion()
+      {
+          return n;
+      }
+
     | n=nuevoArreglo()
-      { return n; }
+      {
+          return n;
+      }
 
     | n=inicializadorArreglo()
-      { return n; }
+      {
+          return n;
+      }
 
     | n=valor()
-      { return n; }
+      {
+          return n;
+      }
 
     | t=<PARENTESIS_IZQ> {
           mostrarToken(t);
       }
-      n=expresion() {
-      }
+      n=expresion()
       t=<PARENTESIS_DER> {
           mostrarToken(t);
       }
       {
-          Nodo resultado = new Nodo("agrupacion");
-          resultado.agregar(n);
-          return resultado;
+          Nodo agrupada = new Nodo("agrupacion");
+          agrupada.agregar(n);
+          n = agrupada;
+      }
+      [
+          t=<PUNTO> {
+              mostrarToken(t);
+          }
+          t=<IDENTIFICADOR> {
+              mostrarToken(t);
+
+              if ("Length".equals(t.image)) {
+                  Nodo propiedad = new Nodo("propiedadArreglo");
+                  propiedad.agregar(n);
+                  n = propiedad;
+              } else {
+                  throw new ParseException(
+                      "Propiedad no admitida en esta version: "
+                      + t.image
+                  );
+              }
+          }
+      ]
+      {
+          return n;
       }
 }
 
@@ -1300,6 +1374,7 @@ String operadorAritmetico() :
     | t=<MOD>   { mostrarToken(t); return "%"; }
 }
 
+
 Nodo valor() :
 {
     Token t;
@@ -1307,42 +1382,101 @@ Nodo valor() :
     Nodo indice;
 }
 {
-      t=<IDENTIFICADOR> { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "identificador"); }
-
-      [
-          t=<CORCHETE_IZQ> { mostrarToken(t); }
-
-          indice=expresion()
-
-          t=<CORCHETE_DER> { mostrarToken(t); }
-
-          {
-              Nodo acceso = new Nodo("accesoArreglo", n.valor);
-              acceso.agregar(indice);
-              n = acceso;
-          }
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "identificador");
+    }
+    [
+        t=<CORCHETE_IZQ>
+        {
+            mostrarToken(t);
+        }
+        indice=expresion()
+        t=<CORCHETE_DER>
+        {
+            mostrarToken(t);
+        }
+        {
+            Nodo acceso = new Nodo("accesoArreglo", n.valor);
+            acceso.agregar(indice);
+            n = acceso;
+        }
 
         |
 
-          t=<PUNTO> { mostrarToken(t); }
+        t=<PUNTO>
+        {
+            mostrarToken(t);
+        }
+        t=<IDENTIFICADOR>
+        {
+            mostrarToken(t);
 
-          t=<IDENTIFICADOR> {
-              mostrarToken(t);
+            if ("Length".equals(t.image)) {
+                n = new Nodo("propiedadArreglo", n.valor);
 
-              if (!"Length".equals(t.image)) {
-                  throw new ParseException(
-                      "Solo se admite la propiedad Length en esta version."
-                  );
-              }
+            } else if ("Message".equals(t.image)) {
+                n = new Nodo("propiedadExcepcion", n.valor);
 
-              n = new Nodo("propiedadArreglo", n.valor);
-          }
-      ]
-      { return n; }
-    | t=<NUMERO>    { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "numero"); return n; }
-    | t=<DECIMAL>   { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "decimal"); return n; }
-    | t=<CADENA>    { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "cadena"); return n; }
-    | t=<TRUE>      { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "true"); return n; }
-    | t=<FALSE>     { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "false"); return n; }
-    | t=<NULL>      { mostrarToken(t); n = new Nodo("valor", t.image); n.atributo("tipoValor", "null"); return n; }
+            } else {
+                throw new ParseException(
+                    "Propiedad no admitida en esta version: "
+                    + t.image
+                );
+            }
+        }
+    ]
+    {
+        return n;
+    }
+
+    | t=<NUMERO>
+      {
+          mostrarToken(t);
+          n = new Nodo("valor", t.image);
+          n.atributo("tipoValor", "numero");
+          return n;
+      }
+
+    | t=<DECIMAL>
+      {
+          mostrarToken(t);
+          n = new Nodo("valor", t.image);
+          n.atributo("tipoValor", "decimal");
+          return n;
+      }
+
+    | t=<CADENA>
+      {
+          mostrarToken(t);
+          n = new Nodo("valor", t.image);
+          n.atributo("tipoValor", "cadena");
+          return n;
+      }
+
+    | t=<TRUE>
+      {
+          mostrarToken(t);
+          n = new Nodo("valor", t.image);
+          n.atributo("tipoValor", "true");
+          return n;
+      }
+
+    | t=<FALSE>
+      {
+          mostrarToken(t);
+          n = new Nodo("valor", t.image);
+          n.atributo("tipoValor", "false");
+          return n;
+      }
+
+    | t=<NULL>
+      {
+          mostrarToken(t);
+          n = new Nodo("valor", t.image);
+          n.atributo("tipoValor", "null");
+          return n;
+      }
 }

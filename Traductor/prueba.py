@@ -47,6 +47,8 @@ while contador < 10:
                 i += 1
         elif contador == 8:
             print("Número par medio: " + str(contador))
+            # Longitud del texto
+            print(len(("texto prueba")))
             # Ordenar arreglo
             numeros.sort()
         else:
@@ -77,7 +79,7 @@ while contador < 10:
                         for item in datos:
                             print("Dato: " + str(item))
                     except Exception as error:
-                        print("Error datos: " + str(error))
+                        print("Error datos: " + str((error.args[0] if error.args else "")))
             else:
                 print("Usuario menor de edad")
                 if not (edad >= 16):
@@ -117,9 +119,11 @@ while contador < 10:
                         print("División: " + str(division))
                     except ArithmeticError:
                         print("División fallida")
+                if puntuacion < 0:
+                    raise InvalidOperationException("Puntuación inválida")
             except Exception as errorCritico:
-                print("Error: " + str(errorCritico))
-                if errorCritico == "Puntuación inválida":
+                print("Error: " + str((errorCritico.args[0] if errorCritico.args else "")))
+                if (errorCritico.args[0] if errorCritico.args else "") == "Puntuación inválida":
                     puntuacion = 0
                     print("Puntuación reiniciada")
                 else:

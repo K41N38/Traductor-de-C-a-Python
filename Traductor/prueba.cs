@@ -65,6 +65,8 @@
                     case 8:
                     {
                         Console.WriteLine("Número par medio: " + contador);
+                        // Longitud del texto
+                        Console.WriteLine(("texto prueba").Length);
                         // Ordenar arreglo
                         Array.Sort(numeros);
                         break;
@@ -124,7 +126,7 @@
                                     }
                                     catch (Exception error)
                                     {
-                                        Console.WriteLine("Error datos: " + error);
+                                        Console.WriteLine("Error datos: " + error.Message);
                                     }
                                     break;
                                 }
@@ -215,11 +217,16 @@
                                     Console.WriteLine("División fallida");
                                 }
                             }
+                            if (puntuacion < 0)
+                            {
+                                throw new InvalidOperationException(
+                                    "Puntuación inválida");
+                            }
                         }
                         catch (Exception errorCritico)
                         {
-                            Console.WriteLine("Error: " + errorCritico);
-                            switch (errorCritico)
+                            Console.WriteLine("Error: " + errorCritico.Message);
+                            switch (errorCritico.Message)
                             {
                                 case "Puntuación inválida":
                                     puntuacion = 0;

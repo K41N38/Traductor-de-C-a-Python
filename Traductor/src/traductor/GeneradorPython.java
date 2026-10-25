@@ -55,6 +55,7 @@ public class GeneradorPython {
             case "condicion":           return generarCondicion(n, nivel);
             case "cicloPara":           return generarPara(n, nivel);
             case "manejoExcepciones":   return generarManejoExcepciones(n, nivel);
+            case "throwInstruccion":    return generarThrow(n, nivel);
             case "cicloDoWhile":        return generarDoWhile(n, nivel);
             case "estructuraSwitch":    return generarSwitch(n, nivel);
             case "escritura":           return tab(nivel) + "print(" + generarExpr(n.hijo(0)) + ")\n";
@@ -374,6 +375,23 @@ public class GeneradorPython {
         };
     }
     
+    private String generarThrow(Nodo n, int nivel) {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(tab(nivel));
+
+        if (n.hijos.isEmpty()) {
+            // Re-lanzar la excepción actual dentro de un catch.
+            sb.append("raise\n");
+        } else {
+            sb.append("raise ");
+            sb.append(generarExpr(n.hijo(0)));
+            sb.append("\n");
+        }
+
+        return sb.toString();
+    }
+    
     private String generarDoWhile(Nodo n, int nivel) {
         Nodo cuerpo = n.hijo(0);
         Nodo cond = n.hijo(1);
@@ -512,6 +530,28 @@ public class GeneradorPython {
             return "input()";
         }
         
+        if ("nuevaExcepcion".equals(n.tipo)) {
+            String tipo = n.atributo("tipo");
+
+            if (tipo == null || tipo.isEmpty()) {
+                tipo = "Exception";
+            }
+
+            StringBuilder sb = new StringBuilder();
+            sb.append(tipo).append("(");
+
+            for (int i = 0; i < n.hijos.size(); i++) {
+                if (i > 0) {
+                    sb.append(", ");
+                }
+
+                sb.append(generarExpr(n.hijo(i)));
+            }
+
+            sb.append(")");
+            return sb.toString();
+        }
+        
         // Llamadas a funciones
         if (n.tipo.equals("llamadaFuncion")) {
             StringBuilder llamada = new StringBuilder();
@@ -559,9 +599,21 @@ public class GeneradorPython {
             return n.valor + "[" + generarExpr(n.hijo(0)) + "]";
         }
 
-        // Propiedad Length: numeros.Length -> len(numeros)
+        // Propiedad Length de una variable o expresión.
         if ("propiedadArreglo".equals(n.tipo)) {
+            if (!n.hijos.isEmpty()) {
+                return "len(" + generarExpr(n.hijo(0)) + ")";
+            }
+
             return "len(" + n.valor + ")";
+        }
+        
+        // Propiedad Message de una excepción de C#.
+        // error.Message -> error.args[0] si existe un mensaje.
+        if ("propiedadExcepcion".equals(n.tipo)) {
+            return "(" + n.valor
+                    + ".args[0] if " + n.valor
+                    + ".args else \"\")";
         }
 
         // Valor simple
