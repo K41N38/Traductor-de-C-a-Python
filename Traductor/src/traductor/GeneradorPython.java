@@ -105,23 +105,14 @@ public class GeneradorPython {
 
     private String generarDeclaracion(Nodo n, int nivel) {
         String nombre = n.valor;
-        String tipoDato = n.atributoPorDefecto("tipoDato", "");
 
+        // Si tiene inicializador, genera la asignación.
         if (!n.hijos.isEmpty()) {
             return tab(nivel) + nombre + " = "
                     + generarExpr(n.hijo(0)) + "\n";
         }
 
-        String valorDefault = switch (tipoDato) {
-            case "int", "long", "short", "byte" -> "0";
-            case "double", "float" -> "0.0";
-            case "bool", "boolean" -> "False";
-            case "string" -> "\"\"";
-            case "char" -> "''";
-            default -> tipoDato.endsWith("[]") ? "[]" : "None";
-        };
-
-        return tab(nivel) + nombre + " = " + valorDefault + "\n";
+        return "";
     }
     
     private String generarAsignacion(Nodo n, int nivel) {
