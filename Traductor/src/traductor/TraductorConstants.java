@@ -103,55 +103,61 @@ public interface TraductorConstants {
   /** RegularExpression Id. */
   int RESTA_ASIGNACION = 50;
   /** RegularExpression Id. */
-  int SUMA = 51;
+  int MULT_ASIGNACION = 51;
   /** RegularExpression Id. */
-  int RESTA = 52;
+  int DIV_ASIGNACION = 52;
   /** RegularExpression Id. */
-  int MULT = 53;
+  int MOD_ASIGNACION = 53;
   /** RegularExpression Id. */
-  int DIV = 54;
+  int SUMA = 54;
   /** RegularExpression Id. */
-  int MOD = 55;
+  int RESTA = 55;
   /** RegularExpression Id. */
-  int ASIGNACION = 56;
+  int MULT = 56;
   /** RegularExpression Id. */
-  int INCREMENTO = 57;
+  int DIV = 57;
   /** RegularExpression Id. */
-  int DECREMENTO = 58;
+  int MOD = 58;
   /** RegularExpression Id. */
-  int AND_LOGICO = 59;
+  int ASIGNACION = 59;
   /** RegularExpression Id. */
-  int OR_LOGICO = 60;
+  int INCREMENTO = 60;
   /** RegularExpression Id. */
-  int NOT_LOGICO = 61;
+  int DECREMENTO = 61;
   /** RegularExpression Id. */
-  int PARENTESIS_IZQ = 62;
+  int AND_LOGICO = 62;
   /** RegularExpression Id. */
-  int PARENTESIS_DER = 63;
+  int OR_LOGICO = 63;
   /** RegularExpression Id. */
-  int LLAVE_IZQ = 64;
+  int NOT_LOGICO = 64;
   /** RegularExpression Id. */
-  int LLAVE_DER = 65;
+  int PARENTESIS_IZQ = 65;
   /** RegularExpression Id. */
-  int CORCHETE_IZQ = 66;
+  int PARENTESIS_DER = 66;
   /** RegularExpression Id. */
-  int CORCHETE_DER = 67;
+  int LLAVE_IZQ = 67;
   /** RegularExpression Id. */
-  int PUNTO_Y_COMA = 68;
+  int LLAVE_DER = 68;
   /** RegularExpression Id. */
-  int DOS_PUNTOS = 69;
+  int CORCHETE_IZQ = 69;
   /** RegularExpression Id. */
-  int COMA = 70;
+  int CORCHETE_DER = 70;
   /** RegularExpression Id. */
-  int PUNTO = 71;
+  int PUNTO_Y_COMA = 71;
   /** RegularExpression Id. */
-  int DECIMAL = 72;
+  int DOS_PUNTOS = 72;
   /** RegularExpression Id. */
-  int NUMERO = 73;
+  int COMA = 73;
   /** RegularExpression Id. */
-  int CADENA = 74;
+  int PUNTO = 74;
   /** RegularExpression Id. */
-  int IDENTIFICADOR = 75;
+  int DECIMAL = 75;
+  /** RegularExpression Id. */
+  int NUMERO = 76;
+  /** RegularExpression Id. */
+  int CADENA = 77;
+  /** RegularExpression Id. */
+  int IDENTIFICADOR = 78;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -209,6 +215,9 @@ public interface TraductorConstants {
     "\">\"",
     "\"+=\"",
     "\"-=\"",
+    "\"*=\"",
+    "\"/=\"",
+    "\"%=\"",
     "\"+\"",
     "\"-\"",
     "\"*\"",

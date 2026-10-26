@@ -130,6 +130,9 @@ TOKEN : {
 |   < MAYOR: ">" >
 |   < SUMA_ASIGNACION: "+=">
 |   < RESTA_ASIGNACION: "-=">
+|   < MULT_ASIGNACION: "*=" >
+|   < DIV_ASIGNACION: "/=" >
+|   < MOD_ASIGNACION: "%=" >
 |   < SUMA: "+" >
 |   < RESTA: "-" >
 |   < MULT: "*" >
@@ -383,6 +386,21 @@ Nodo asignacion() :
         {
             mostrarToken(t);
             n.atributo("operadorAsignacion", "-=");
+        }
+      | t=<MULT_ASIGNACION>
+        {
+            mostrarToken(t);
+            n.atributo("operadorAsignacion", "*=");
+        }
+      | t=<DIV_ASIGNACION>
+        {
+            mostrarToken(t);
+            n.atributo("operadorAsignacion", "/=");
+        }
+      | t=<MOD_ASIGNACION>
+        {
+            mostrarToken(t);
+            n.atributo("operadorAsignacion", "%=");
         }
     )
 
@@ -742,6 +760,21 @@ Nodo asignacionSimple() :
             t=<RESTA_ASIGNACION> {
                 mostrarToken(t);
                 n.atributo("operadorAsignacion", "-=");
+            }
+          |
+            t=<MULT_ASIGNACION> {
+                mostrarToken(t);
+                n.atributo("operadorAsignacion", "*=");
+            }
+          |
+            t=<DIV_ASIGNACION> {
+                mostrarToken(t);
+                n.atributo("operadorAsignacion", "/=");
+            }
+          |
+            t=<MOD_ASIGNACION> {
+                mostrarToken(t);
+                n.atributo("operadorAsignacion", "%=");
             }
         )
         exp=expresion() {

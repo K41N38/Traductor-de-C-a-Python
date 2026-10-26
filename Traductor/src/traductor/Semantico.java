@@ -325,39 +325,105 @@ public class Semantico {
             }
         }
 
-        // Asignación normal: variable = expresión.
+        // Valida asignaciones normales y compuestas.
         if ("asignacion".equals(nodo.tipo)
                 || "asignacionSimple".equals(nodo.tipo)) {
 
-            String operador = nodo.atributo("operadorAsignacion");
+            String operador = nodo.atributoPorDefecto(
+                "operadorAsignacion", "="
+            );
 
-            if ("=".equals(operador)) {
-                String tipoEsperado = obtenerTipoVariable(nodo.valor);
+            String tipoEsperado =
+                obtenerTipoVariable(nodo.valor);
 
-                // En asignaciones a arreglos, el primer hijo
-                // es el índice y el último es el valor asignado.
-                if (nodo.hijos != null && !nodo.hijos.isEmpty()) {
-                    Nodo valorAsignado =
-                        nodo.hijo(nodo.hijos.size() - 1);
+            if (tipoEsperado != null
+                    && nodo.hijos != null
+                    && !nodo.hijos.isEmpty()) {
 
-                    String tipoRecibido = inferirTipo(valorAsignado);
+                // El último hijo contiene el valor asignado.
+                // Esto también permite conservar la validación
+                // de asignaciones a elementos de arreglos.
+                Nodo valorAsignado =
+                    nodo.hijo(nodo.hijos.size() - 1);
 
-                    if (tipoEsperado != null) {
-                        if (tipoEsperado.endsWith("[]")
-                                && "arreglo".equals(tipoRecibido)) {
+                String tipoRecibido =
+                    inferirTipo(valorAsignado);
 
-                            validarElementosArreglo(
-                                tipoEsperado, valorAsignado, nodo.valor
-                            );
+                if ("=".equals(operador)) {
 
-                        } else if (!tipoEsperado.endsWith("[]")
-                                && !tiposCompatibles(
-                                    tipoEsperado, tipoRecibido)) {
+                    if (tipoEsperado.endsWith("[]")
+                            && "arreglo".equals(tipoRecibido)) {
 
-                            error("No se puede asignar un valor de tipo '"
-                                + tipoRecibido + "' a la variable '"
+                        validarElementosArreglo(
+                            tipoEsperado,
+                            valorAsignado,
+                            nodo.valor
+                        );
+
+                    } else if (!tipoEsperado.endsWith("[]")
+                            && !tiposCompatibles(
+                                tipoEsperado,
+                                tipoRecibido)) {
+
+                        error(
+                            "No se puede asignar un valor de tipo '"
+                            + tipoRecibido + "' a la variable '"
+                            + nodo.valor + "' de tipo '"
+                            + tipoEsperado + "'."
+                        );
+                    }
+
+                } else if ("+=".equals(operador)
+                        || "-=".equals(operador)
+                        || "*=".equals(operador)
+                        || "/=".equals(operador)
+                        || "%=".equals(operador)) {
+
+                    String tipoDestino =
+                        normalizarTipo(tipoEsperado);
+
+                    String tipoOrigen =
+                        normalizarTipo(tipoRecibido);
+
+                    // No se permiten asignaciones compuestas
+                    // sobre arreglos.
+                    if (tipoEsperado.endsWith("[]")) {
+
+                        error(
+                            "El operador '" + operador
+                            + "' no es válido para la variable '"
+                            + nodo.valor + "' de tipo '"
+                            + tipoEsperado + "'."
+                        );
+
+                    } else if (!"desconocido".equals(tipoOrigen)) {
+
+                        boolean compatible = false;
+
+                        // += permite concatenar cuando el destino
+                        // es una cadena.
+                        if ("+=".equals(operador)
+                                && "string".equals(tipoDestino)) {
+
+                            compatible = true;
+
+                        } else if (esNumerico(tipoDestino)
+                                && esNumerico(tipoOrigen)) {
+
+                            // Los demás operadores compuestos
+                            // requieren operandos numéricos.
+                            compatible = true;
+                        }
+
+                        if (!compatible) {
+                            error(
+                                "No se puede aplicar el operador '"
+                                + operador + "' a la variable '"
                                 + nodo.valor + "' de tipo '"
-                                + tipoEsperado + "'.");
+                                + tipoEsperado
+                                + "' con un valor de tipo '"
+                                + tipoRecibido + "'."
+                            );
                         }
                     }
                 }
@@ -753,6 +819,77 @@ public class Semantico {
             }
         }
 
+        // SWITCH: analiza cada caso por separado y combina
+        // las variables inicializadas en todas las ramas.
+        if ("estructuraSwitch".equals(nodo.tipo)) {
+
+            // El primer hijo contiene la expresión del switch.
+            validarUsosExpresion(
+                nodo.hijo(0), inicializadas
+            );
+
+            Set<String> estadoComun = null;
+            boolean tieneDefault = false;
+
+            // Los casos comienzan en el segundo hijo.
+            for (int i = 1; i < nodo.hijos.size(); i++) {
+
+                Nodo rama = nodo.hijo(i);
+
+                Set<String> estadoRama =
+                    new HashSet<String>(inicializadas);
+
+                int inicioInstrucciones = 0;
+
+                if ("casoSwitch".equals(rama.tipo)) {
+
+                    // El primer hijo del caso es su etiqueta.
+                    if (!rama.hijos.isEmpty()) {
+                        validarUsosExpresion(
+                            rama.hijo(0), inicializadas
+                        );
+                    }
+
+                    inicioInstrucciones = 1;
+
+                } else if ("casoDefault".equals(rama.tipo)) {
+
+                    tieneDefault = true;
+
+                } else {
+                    continue;
+                }
+
+                // Procesa las instrucciones de esta rama
+                // en orden y conserva sus asignaciones.
+                for (int j = inicioInstrucciones;
+                        j < rama.hijos.size(); j++) {
+
+                    validarInicializacion(
+                        rama.hijo(j), estadoRama
+                    );
+                }
+
+                // Conserva únicamente las variables inicializadas
+                // en todas las ramas analizadas.
+                if (estadoComun == null) {
+                    estadoComun =
+                        new HashSet<String>(estadoRama);
+                } else {
+                    estadoComun.retainAll(estadoRama);
+                }
+            }
+
+            // Sin default, el switch podría no ejecutar ningún caso.
+            // Por eso solo propagamos el resultado si existe default.
+            if (tieneDefault && estadoComun != null) {
+                inicializadas.clear();
+                inicializadas.addAll(estadoComun);
+            }
+
+            return;
+        }
+        
         // Para otras estructuras, se revisan sus expresiones
         // y sus bloques sin propagar asignaciones inciertas.
         for (Nodo hijo : nodo.hijos) {
