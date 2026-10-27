@@ -104,6 +104,7 @@ TOKEN : {
 |   < CONSOLE: "Console" >
 |   < WRITELINE: "WriteLine" >
 |   < READLINE: "ReadLine" >
+|   < READKEY: "ReadKey" >
 |   < FOREACH: "foreach" >
 |   < IN: "in" >
 |   < INT: "int" >
@@ -801,29 +802,61 @@ Nodo asignacionSimple() :
 // PRINT
 // ------------------------------------------------------
 Nodo escritura() :
-{ Token t; Nodo n = new Nodo("escritura"); Nodo exp; }
+{
+    Token t;
+    Nodo n = new Nodo("escritura");
+    Nodo exp;
+}
 {
     (
-          (
-              t=<PRINT>   { mostrarToken(t); n.atributo("variante", "print"); }
-            | t=<PRINTLN> { mostrarToken(t); n.atributo("variante", "println"); }
-          )
-          t=<PARENTESIS_IZQ> { mostrarToken(t); }
-          exp=expresion() { n.agregar(exp); }
-          t=<PARENTESIS_DER> { mostrarToken(t); }
-          t=<PUNTO_Y_COMA> { mostrarToken(t); }
-
-        |
-
-          t=<CONSOLE> { mostrarToken(t); }
-          t=<PUNTO> { mostrarToken(t); }
-          t=<WRITELINE> { mostrarToken(t); n.atributo("variante", "WriteLine"); }
-          t=<PARENTESIS_IZQ> { mostrarToken(t); }
-          exp=expresion() { n.agregar(exp); }
-          t=<PARENTESIS_DER> { mostrarToken(t); }
-          t=<PUNTO_Y_COMA> { mostrarToken(t); }
+        (
+            (
+                t=<PRINT>
+                { mostrarToken(t); n.atributo("variante", "print"); }
+              |
+                t=<PRINTLN>
+                { mostrarToken(t); n.atributo("variante", "println"); }
+            )
+            t=<PARENTESIS_IZQ> { mostrarToken(t); }
+            exp=expresion() { n.agregar(exp); }
+            t=<PARENTESIS_DER> { mostrarToken(t); }
+        )
+      |
+        (
+            t=<CONSOLE> { mostrarToken(t); }
+            t=<PUNTO> { mostrarToken(t); }
+            (
+                (
+                    t=<WRITELINE>
+                    {
+                        mostrarToken(t);
+                        n.atributo("variante", "WriteLine");
+                    }
+                    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+                    exp=expresion() { n.agregar(exp); }
+                    t=<PARENTESIS_DER> { mostrarToken(t); }
+                )
+              |
+                (
+                    (
+                        t=<READLINE>
+                      |
+                        t=<READKEY>
+                    )
+                    {
+                        mostrarToken(t);
+                        n = new Nodo("lecturaConsola");
+                    }
+                    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+                    t=<PARENTESIS_DER> { mostrarToken(t); }
+                )
+            )
+        )
+        t=<PUNTO_Y_COMA> { mostrarToken(t); }
     )
-    { return n; }
+    {
+        return n;
+    }
 }
 
 // ------------------------------------------------------

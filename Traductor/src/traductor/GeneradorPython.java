@@ -59,6 +59,7 @@ public class GeneradorPython {
             case "cicloDoWhile":        return generarDoWhile(n, nivel);
             case "estructuraSwitch":    return generarSwitch(n, nivel);
             case "escritura":           return tab(nivel) + "print(" + generarExpr(n.hijo(0)) + ")\n";
+            case "lecturaConsola":      return tab(nivel) + "input()\n";
             case "cicloMientras":       return generarMientras(n, nivel);
             case "cicloForeach":        return generarForeach(n, nivel);
             case "breakInstruccion":    return generarBreak(nivel);
