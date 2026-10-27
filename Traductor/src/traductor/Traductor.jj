@@ -9,26 +9,6 @@ package traductor;
 import java.io.*;
 import java.util.*;
 
-/**
- * Traductor.jj
- * ------------
- * Extiende la gramática original de Analizador.jj: SIGUE reconociendo y
- * validando el mismo código C# (mismos tokens, mismas reglas, mismo
- * análisis léxico/semántico impreso por consola), pero además cada regla
- * ahora CONSTRUYE Y REGRESA un Nodo del AST en vez de ser "void".
- *
- * Ese árbol (Nodo "programa") es lo que luego recorren GeneradorPython y
- * GeneradorJavaScript para producir el código traducido.
- *
- * Qué cambié respecto a Analizador.jj:
- *   - Cada "void regla()" pasó a ser "Nodo regla()" y termina con
- *     "{ return nodo; }".
- *   - Se agregaron variables locales "Nodo n = new Nodo(\"tipo\")" y
- *     llamadas a n.agregar(...) / n.atributo(...) para ir armando el árbol.
- *   - mostrarToken(t) y regla(...) del original se conservan tal cual,
- *     así que la salida de consola con el detalle léxico/sintáctico sigue
- *     funcionando igual que antes.
- */
 public class Traductor {
 
     public static void regla(String r) {
@@ -1081,6 +1061,97 @@ Nodo llamadaFuncion() :
     { return n; }
 }
 
+Nodo conversionParse() :
+{
+    Token t;
+    String tipo;
+    Nodo n = new Nodo("conversionTipo");
+    Nodo argumento;
+}
+{
+    (
+        t=<INT> {
+            mostrarToken(t);
+            tipo = "int";
+        }
+      |
+        t=<DOUBLE> {
+            mostrarToken(t);
+            tipo = "double";
+        }
+    )
+
+    t=<PUNTO> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+
+        if (!"Parse".equals(t.image)) {
+            throw new ParseException(
+                "Solo se admite Parse para esta conversion."
+            );
+        }
+    }
+
+    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
+    argumento=expresion() {
+        n.atributo("tipo", tipo);
+        n.agregar(argumento);
+    }
+
+    t=<PARENTESIS_DER> { mostrarToken(t); }
+
+    { return n; }
+}
+
+Nodo conversionConvert() :
+{
+    Token t;
+    String tipo;
+    Nodo n = new Nodo("conversionTipo");
+    Nodo argumento;
+}
+{
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+
+        if (!"Convert".equals(t.image)) {
+            throw new ParseException(
+                "Se esperaba Convert."
+            );
+        }
+    }
+
+    t=<PUNTO> { mostrarToken(t); }
+
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+
+        if ("ToInt32".equals(t.image)) {
+            tipo = "int";
+        } else if ("ToDouble".equals(t.image)) {
+            tipo = "double";
+        } else {
+            throw new ParseException(
+                "Conversion no soportada: " + t.image
+            );
+        }
+
+        n.atributo("tipo", tipo);
+    }
+
+    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
+    argumento=expresion() {
+        n.agregar(argumento);
+    }
+
+    t=<PARENTESIS_DER> { mostrarToken(t); }
+
+    { return n; }
+}
+
 Nodo nuevoArreglo() :
 {
     Token t;
@@ -1327,17 +1398,47 @@ Nodo expresionPrimaria() :
     Token t;
 }
 {
-    LOOKAHEAD(4)
+    LOOKAHEAD({
+        getToken(1).image.equals("Array")
+        && getToken(2).kind == PUNTO
+        && getToken(3).image.equals("IndexOf")
+        && getToken(4).kind == PARENTESIS_IZQ
+    })
     n=busquedaIndiceArreglo()
     {
         return n;
     }
 
+    | LOOKAHEAD(<INT> <PUNTO> <IDENTIFICADOR> <PARENTESIS_IZQ>)
+    n=conversionParse()
+    {
+        return n;
+    }
+
+    | LOOKAHEAD(<DOUBLE> <PUNTO> <IDENTIFICADOR> <PARENTESIS_IZQ>)
+    n=conversionParse()
+    {
+        return n;
+    }
+
+    | LOOKAHEAD({
+        getToken(1).image.equals("Convert")
+        && getToken(2).kind == PUNTO
+        && (
+            getToken(3).image.equals("ToInt32")
+            || getToken(3).image.equals("ToDouble")
+        )
+    })
+    n=conversionConvert()
+    {
+        return n;
+    }
+
     | LOOKAHEAD(2)
-      n=llamadaFuncion()
-      {
-          return n;
-      }
+    n=llamadaFuncion()
+    {
+        return n;
+    }
 
     | t=<CONSOLE> {
           mostrarToken(t);

@@ -276,6 +276,25 @@
                 Console.WriteLine("Puntuación reiniciada: " + puntuacion);
                 break;
             case 50:
+                int numero = int.Parse(Console.ReadLine());
+                Console.WriteLine(numero + 1);
+
+                double decimal = double.Parse(Console.ReadLine());
+                Console.WriteLine(decimal);
+
+                int entero = Convert.ToInt32(Console.ReadLine());
+                double precio = Convert.ToDouble(Console.ReadLine());
+
+                Console.WriteLine(entero);
+                Console.WriteLine(precio);
+
+                string dato = "25";
+                int num = int.Parse(dato);
+                Console.WriteLine(num + 5);
+
+                int prueba;
+                prueba = Convert.ToInt32(Console.ReadLine());
+                break;
             case 75:
                 Console.WriteLine("Puntuación media final: " + puntuacion);
                 break;

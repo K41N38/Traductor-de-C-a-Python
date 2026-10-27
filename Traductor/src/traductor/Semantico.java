@@ -462,7 +462,20 @@ public class Semantico {
         if ("lecturaConsola".equals(nodo.tipo)) {
             return "string";
         }
+        
+        // Reconoce las conversiones de tipos de C#.
+        if ("conversionTipo".equals(nodo.tipo)) {
+            String tipo = nodo.atributo("tipo");
 
+            if ("int".equals(tipo)) {
+                return "int";
+            }
+
+            if ("double".equals(tipo)) {
+                return "double";
+            }
+        }
+        
         if ("propiedadArreglo".equals(nodo.tipo)) {
             return "int";
         }

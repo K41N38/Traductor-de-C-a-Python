@@ -522,6 +522,22 @@ public class GeneradorPython {
             return "input()";
         }
         
+        // Conversiones de tipos de C# a Python.
+        if ("conversionTipo".equals(n.tipo)) {
+            String tipo = n.atributo("tipo");
+            String argumento = generarExpr(n.hijo(0));
+
+            if ("int".equals(tipo)) {
+                return "int(" + argumento + ")";
+            }
+
+            if ("double".equals(tipo)) {
+                return "float(" + argumento + ")";
+            }
+
+            return argumento;
+        }
+        
         if ("nuevaExcepcion".equals(n.tipo)) {
             String tipo = n.atributo("tipo");
 
@@ -684,7 +700,19 @@ public class GeneradorPython {
         if (n == null) {
             return null;
         }
+        
+        if ("conversionTipo".equals(n.tipo)) {
+            String tipo = n.atributo("tipo");
 
+            if ("int".equals(tipo)) {
+                return "int";
+            }
+
+            if ("double".equals(tipo)) {
+                return "decimal";
+            }
+        }
+        
         // Literales e identificadores.
         if ("valor".equals(n.tipo)) {
             String tipoValor = n.atributo("tipoValor");
