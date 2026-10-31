@@ -98,6 +98,8 @@ TOKEN : {
 |   < LONG: "long" >
 |   < SHORT: "short" >
 |   < BYTE: "byte" >
+|   < VOID: "void" >
+|   < STATIC: "static" >
 |   <COMENTARIO_LINEA: "//" (~["\n", "\r"])* >
 |   <COMENTARIO_BLOQUE: "/*" (~["*"] | "*" ~["/"])* "*/" >
 }
@@ -163,6 +165,7 @@ Nodo instruccion() :
 {
     (
           LOOKAHEAD(2) n=comentario()
+        | LOOKAHEAD(3) n=declaracionFuncion()
         | LOOKAHEAD(2) n=declaracionVariable()
         | LOOKAHEAD(6) n=copiarArreglo()
         | LOOKAHEAD(4) n=operacionArreglo()
@@ -177,6 +180,8 @@ Nodo instruccion() :
         | LOOKAHEAD(2) n=cicloForeach()
         | LOOKAHEAD(2) n=estructuraSwitch()
         | LOOKAHEAD(2) n=escritura()
+        | LOOKAHEAD(<IDENTIFICADOR> <PARENTESIS_IZQ>)
+          n=llamadaFuncionInstruccion()
         | LOOKAHEAD(2) n=breakInstruccion()
         | LOOKAHEAD(2) n=continueInstruccion()
         | LOOKAHEAD(2) n=returnInstruccion()
@@ -215,9 +220,169 @@ Nodo comentario() :
 }
 
 // ------------------------------------------------------
+// DECLARACION DE FUNCIONES
+// ------------------------------------------------------
+String tipoFuncion() :
+{
+    Token t;
+    String tipo = "";
+}
+{
+    (
+          t=<VOID>    { mostrarToken(t); tipo = "void"; }
+        | t=<INT>     { mostrarToken(t); tipo = "int"; }
+        | t=<BOOL>    { mostrarToken(t); tipo = "bool"; }
+        | t=<BOOLEAN> { mostrarToken(t); tipo = "boolean"; }
+        | t=<STRING>  { mostrarToken(t); tipo = "string"; }
+        | t=<CHAR>    { mostrarToken(t); tipo = "char"; }
+        | t=<DOUBLE>  { mostrarToken(t); tipo = "double"; }
+        | t=<FLOAT>   { mostrarToken(t); tipo = "float"; }
+        | t=<LONG>    { mostrarToken(t); tipo = "long"; }
+        | t=<SHORT>   { mostrarToken(t); tipo = "short"; }
+        | t=<BYTE>    { mostrarToken(t); tipo = "byte"; }
+    )
+    {
+        return tipo;
+    }
+}
+
+String tipoParametro() :
+{
+    Token t;
+    String tipo = "";
+}
+{
+    (
+          t=<INT>     { mostrarToken(t); tipo = "int"; }
+        | t=<BOOL>    { mostrarToken(t); tipo = "bool"; }
+        | t=<BOOLEAN> { mostrarToken(t); tipo = "boolean"; }
+        | t=<STRING>  { mostrarToken(t); tipo = "string"; }
+        | t=<CHAR>    { mostrarToken(t); tipo = "char"; }
+        | t=<DOUBLE>  { mostrarToken(t); tipo = "double"; }
+        | t=<FLOAT>   { mostrarToken(t); tipo = "float"; }
+        | t=<LONG>    { mostrarToken(t); tipo = "long"; }
+        | t=<SHORT>   { mostrarToken(t); tipo = "short"; }
+        | t=<BYTE>    { mostrarToken(t); tipo = "byte"; }
+    )
+
+    [
+        t=<CORCHETE_IZQ> { mostrarToken(t); }
+        t=<CORCHETE_DER> { mostrarToken(t); }
+        { tipo = tipo + "[]"; }
+    ]
+
+    {
+        return tipo;
+    }
+}
+
+Nodo declaracionFuncion() :
+{
+    Token t;
+    String tipoRetorno;
+    String tipoDato;
+    String modificador = "ninguno";
+
+    Nodo n = new Nodo("funcion");
+    Nodo parametro;
+    Nodo cuerpo;
+}
+{
+    [
+        t=<STATIC>
+        {
+            mostrarToken(t);
+            modificador = "static";
+        }
+    ]
+
+    tipoRetorno=tipoFuncion()
+    {
+        n.atributo("tipoRetorno", tipoRetorno);
+        n.atributo("modificador", modificador);
+    }
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n.valor = t.image;
+    }
+
+    t=<PARENTESIS_IZQ>
+    {
+        mostrarToken(t);
+    }
+
+    [
+        parametro=parametroFuncion()
+        {
+            n.agregar(parametro);
+        }
+
+        (
+            t=<COMA>
+            {
+                mostrarToken(t);
+            }
+
+            parametro=parametroFuncion()
+            {
+                n.agregar(parametro);
+            }
+        )*
+    ]
+
+    t=<PARENTESIS_DER>
+    {
+        mostrarToken(t);
+    }
+
+    cuerpo=bloque()
+    {
+        n.agregar(cuerpo);
+        return n;
+    }
+}
+
+Nodo parametroFuncion() :
+{
+    Token t;
+    String tipoDato;
+    Nodo n = new Nodo("parametro");
+}
+{
+    tipoDato=tipoParametro()
+
+    t=<IDENTIFICADOR>
+    {
+        mostrarToken(t);
+        n.valor = t.image;
+        n.atributo("tipoDato", tipoDato);
+        return n;
+    }
+}
+
+// ------------------------------------------------------
+// LLAMADA A FUNCION COMO INSTRUCCION
+// ------------------------------------------------------
+Nodo llamadaFuncionInstruccion() :
+{
+    Token t;
+    Nodo n;
+}
+{
+    n=llamadaFuncion()
+
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
+    {
+        return n;
+    }
+}
+
+// ------------------------------------------------------
 // DECLARACION DE VARIABLES
 // ------------------------------------------------------
-
 Nodo declaracionVariable() :
 {
     Token t;

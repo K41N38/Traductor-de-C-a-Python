@@ -2,17 +2,6 @@ package traductor;
 
 import java.util.*;
 
-/**
- * Recorre el AST (Nodo "programa") y emite código Python equivalente.
- *
- * Cobertura actual (mismas construcciones que ya reconoce la gramática):
- *   declaracionVariable, asignacion, condicion (if/else), cicloMientras,
- *   cicloPara, cicloDoWhile, cicloForeach, estructuraSwitch, escritura,
- *   break/continue/return, bloque, expresiones aritméticas y lógicas.
- *
- * Es intencionalmente simple (concatenación de strings con indentación
- * manual) para que sea fácil de leer, depurar y corregir/ampliar.
- */
 public class GeneradorPython {
 
     private static final String INDENT = "    ";
@@ -64,6 +53,8 @@ public class GeneradorPython {
             case "cicloForeach":        return generarForeach(n, nivel);
             case "breakInstruccion":    return generarBreak(nivel);
             case "continueInstruccion": return generarContinue(nivel);
+            case "funcion":             return generarFuncion(n, nivel);
+            case "llamadaFuncion": return tab(nivel) + generarExpr(n) + "\n";
             case "returnInstruccion":   return tab(nivel) + "return" + (n.hijos.isEmpty() ? "" : " " + generarExpr(n.hijo(0))) + "\n";
             case "bloque":              return generarBloque(n, nivel);
             default:
@@ -149,6 +140,49 @@ public class GeneradorPython {
         }
 
         sb.append(tab(nivel)).append("continue\n");
+
+        return sb.toString();
+    }
+    
+    private String generarFuncion(Nodo n, int nivel) {
+        StringBuilder sb = new StringBuilder();
+
+        String nombre = n.valor;
+        List<String> parametros = new ArrayList<>();
+
+        // Todos los hijos excepto el último son parámetros.
+        int cantidadParametros = Math.max(0, n.hijos.size() - 1);
+
+        for (int i = 0; i < cantidadParametros; i++) {
+            Nodo parametro = n.hijos.get(i);
+
+            if ("parametro".equals(parametro.tipo)) {
+                parametros.add(parametro.valor);
+            }
+        }
+
+        // Generar encabezado de la función.
+        sb.append(tab(nivel))
+                .append("def ")
+                .append(nombre)
+                .append("(")
+                .append(String.join(", ", parametros))
+                .append("):\n");
+
+        // Generar cuerpo de la función.
+        if (!n.hijos.isEmpty()) {
+            Nodo cuerpo = n.hijos.get(n.hijos.size() - 1);
+
+            if ("bloque".equals(cuerpo.tipo)) {
+                sb.append(generarBloque(cuerpo, nivel + 1));
+            } else {
+                sb.append(tab(nivel + 1)).append("pass\n");
+            }
+        } else {
+            sb.append(tab(nivel + 1)).append("pass\n");
+        }
+
+        sb.append("\n");
 
         return sb.toString();
     }
@@ -240,6 +274,21 @@ public class GeneradorPython {
     }
     
     private String generarPara(Nodo n, int nivel) {
+
+        String rango = construirRangePython(n);
+
+        // Si se pudo convertir a range(), generar un for nativo.
+        if (rango != null) {
+
+            String variable = obtenerVariableFor(n);
+
+            return tab(nivel)
+                    + "for " + variable + " in " + rango + ":\n"
+                    + generarBloqueConContexto(
+                            n.hijo(3), nivel + 1, "ciclo");
+        }
+
+        // Respaldo: conservar el comportamiento anterior con while.
         Nodo init = n.hijo(0);
         Nodo cond = n.hijo(1);
         Nodo upd = n.hijo(2);
@@ -247,21 +296,17 @@ public class GeneradorPython {
 
         StringBuilder sb = new StringBuilder();
 
-        // Inicialización: puede estar vacía.
         if (init != null && !"sinInicializacion".equals(init.tipo)) {
             sb.append(generarInstruccion(init, nivel));
         }
 
-        // Preparar la actualización del ciclo.
         String actualizacion = obtenerActualizacionPara(upd);
 
-        // Condición del ciclo.
         sb.append(tab(nivel))
           .append("while ")
           .append(generarExpr(cond))
           .append(":\n");
 
-        // El continue de este ciclo debe ejecutar su actualización.
         actualizacionesContinue.push(actualizacion);
 
         try {
@@ -272,7 +317,6 @@ public class GeneradorPython {
             actualizacionesContinue.pop();
         }
 
-        // Actualización normal, al terminar el cuerpo.
         sb.append(tab(nivel + 1))
           .append(actualizacion)
           .append("\n");
@@ -300,6 +344,139 @@ public class GeneradorPython {
         Nodo expresion = n.hijo(0);
 
         return n.valor + " " + operador + " " + generarExpr(expresion);
+    }
+    
+    private String obtenerVariableFor(Nodo n) {
+
+        Nodo init = n.hijo(0);
+
+        if ("declaracionesMultiples".equals(init.tipo)
+                && !init.hijos.isEmpty()) {
+            return init.hijo(0).valor;
+        }
+
+        return init.valor;
+    }
+
+    private String construirRangePython(Nodo n) {
+
+        Nodo init = n.hijo(0);
+        Nodo cond = n.hijo(1);
+        Nodo upd = n.hijo(2);
+
+        String variable = obtenerVariableFor(n);
+
+        String inicio = obtenerInicioFor(init);
+
+        if (inicio == null) {
+            return null;
+        }
+
+        String fin = obtenerFinFor(cond, variable);
+
+        if (fin == null) {
+            return null;
+        }
+
+        String paso = obtenerPasoFor(upd, variable);
+
+        if (paso == null) {
+            return null;
+        }
+
+        if ("1".equals(paso)) {
+            return "range(" + inicio + ", " + fin + ")";
+        }
+
+        return "range(" + inicio + ", " + fin + ", " + paso + ")";
+    }
+
+    private String obtenerInicioFor(Nodo init) {
+
+        if ("declaracionesMultiples".equals(init.tipo)
+                && !init.hijos.isEmpty()) {
+
+            Nodo v = init.hijo(0);
+
+            if (!v.hijos.isEmpty()) {
+                return generarExpr(v.hijo(0));
+            }
+        }
+
+        if ("asignacionSimple".equals(init.tipo)
+                && !init.hijos.isEmpty()) {
+
+            return generarExpr(init.hijo(0));
+        }
+
+        return null;
+    }
+
+    private String obtenerFinFor(Nodo cond, String variable) {
+
+        if (!"expresionLogica".equals(cond.tipo)) {
+            return null;
+        }
+
+        String op = cond.atributo("operador");
+
+        Nodo izq = cond.hijo(0);
+        Nodo der = cond.hijo(1);
+
+        if (!"valor".equals(izq.tipo)
+                || !"identificador".equals(
+                        izq.atributo("tipoValor"))
+                || !variable.equals(izq.valor)) {
+            return null;
+        }
+
+        String limite = generarExpr(der);
+
+        return switch (op) {
+
+            case "<" ->
+                limite;
+
+            case "<=" ->
+                limite + " + 1";
+
+            case ">" ->
+                limite;
+
+            case ">=" ->
+                limite + " - 1";
+
+            default ->
+                null;
+        };
+    }
+
+    private String obtenerPasoFor(Nodo upd, String variable) {
+
+        if (!variable.equals(upd.valor)) {
+            return null;
+        }
+
+        String op = upd.atributoPorDefecto(
+                "operadorAsignacion", "=");
+
+        switch (op) {
+
+            case "++":
+                return "1";
+
+            case "--":
+                return "-1";
+
+            case "+=":
+                return generarExpr(upd.hijo(0));
+
+            case "-=":
+                return "-" + generarExpr(upd.hijo(0));
+
+            default:
+                return null;
+        }
     }
     
     private String generarManejoExcepciones(Nodo n, int nivel) {

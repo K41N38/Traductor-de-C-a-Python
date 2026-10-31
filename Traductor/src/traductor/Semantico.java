@@ -4,13 +4,201 @@ import java.util.*;
 public class Semantico {
 
     private static List<String> errores = new ArrayList<>();
+
     private static Map<String, String> tablaVariables = new HashMap<>();
+
+    // Información de las funciones declaradas en el programa.
+    private static Map<String, FuncionInfo> tablaFunciones = new LinkedHashMap<>();
+
+    // Información de una función.
+    private static class FuncionInfo {
+        String nombre;
+        String tipoRetorno;
+        List<String> nombresParametros = new ArrayList<>();
+        List<String> tiposParametros = new ArrayList<>();
+
+        FuncionInfo(String nombre, String tipoRetorno) {
+            this.nombre = nombre;
+            this.tipoRetorno = normalizarTipo(tipoRetorno);
+        }
+    }
 
     public static void limpiar() {
         errores.clear();
         tablaVariables.clear();
+        tablaFunciones.clear();
+    }
+    
+    private static void registrarFunciones(Nodo nodo) {
+        if (nodo == null) {
+            return;
+        }
+
+        if ("funcion".equals(nodo.tipo)) {
+            String nombre = nodo.valor;
+            String tipoRetorno = nodo.atributoPorDefecto("tipoRetorno", "void");
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                errores.add("Se encontró una función sin nombre.");
+                return;
+            }
+
+            if (tablaFunciones.containsKey(nombre)) {
+                errores.add("La función '" + nombre + "' ya fue declarada.");
+                return;
+            }
+
+            FuncionInfo info = new FuncionInfo(nombre, tipoRetorno);
+
+            // Todos los hijos, excepto el último, son parámetros.
+            int cantidadParametros = Math.max(0, nodo.hijos.size() - 1);
+
+            for (int i = 0; i < cantidadParametros; i++) {
+                Nodo parametro = nodo.hijos.get(i);
+
+                if (!"parametro".equals(parametro.tipo)) {
+                    continue;
+                }
+
+                info.nombresParametros.add(parametro.valor);
+                info.tiposParametros.add(
+                    normalizarTipo(parametro.atributoPorDefecto("tipoDato", "desconocido"))
+                );
+            }
+
+            tablaFunciones.put(nombre, info);
+        }
+
+        for (Nodo hijo : nodo.hijos) {
+            registrarFunciones(hijo);
+        }
     }
 
+    private static void validarLlamadasFunciones(Nodo nodo) {
+        if (nodo == null) {
+            return;
+        }
+
+        if ("llamadaFuncion".equals(nodo.tipo)) {
+            String nombre = nodo.valor;
+            FuncionInfo funcion = tablaFunciones.get(nombre);
+
+            if (funcion == null) {
+                errores.add(
+                    "La función '" + nombre
+                    + "' se utiliza, pero no ha sido declarada."
+                );
+            } else {
+                int esperados = funcion.tiposParametros.size();
+                int recibidos = nodo.hijos.size();
+
+                if (esperados != recibidos) {
+                    errores.add(
+                        "La función '" + nombre + "' requiere "
+                        + esperados + " parámetro(s), pero recibió "
+                        + recibidos + "."
+                    );
+                }
+
+                // Comprobar los tipos de los argumentos disponibles.
+                int limite = Math.min(esperados, recibidos);
+
+                for (int i = 0; i < limite; i++) {
+                    String tipoEsperado = normalizarTipo(
+                        funcion.tiposParametros.get(i)
+                    );
+
+                    String tipoRecibido = normalizarTipo(
+                        inferirTipo(nodo.hijo(i))
+                    );
+
+                    // Si no se puede determinar el tipo, se deja pendiente.
+                    if (tipoRecibido == null
+                            || "desconocido".equalsIgnoreCase(tipoRecibido)) {
+                        continue;
+                    }
+
+                    if (!tiposCompatibles(tipoEsperado, tipoRecibido)) {
+                        errores.add(
+                            "El parámetro " + (i + 1)
+                            + " de la función '" + nombre
+                            + "' debe ser de tipo '" + tipoEsperado
+                            + "', pero se recibió '" + tipoRecibido + "'."
+                        );
+                    }
+                }
+            }
+        }
+
+        for (Nodo hijo : nodo.hijos) {
+            validarLlamadasFunciones(hijo);
+        }
+    }
+    
+    private static void validarLlamadasFunciones(Nodo nodo, boolean dentroDeFuncion) {
+        if (nodo == null) {
+            return;
+        }
+
+        boolean contextoFuncion = dentroDeFuncion || "funcion".equals(nodo.tipo);
+
+        if ("llamadaFuncion".equals(nodo.tipo)) {
+            String nombre = nodo.valor;
+            FuncionInfo funcion = tablaFunciones.get(nombre);
+
+            if (funcion == null) {
+                errores.add("La función '" + nombre + "' se utiliza, pero no ha sido declarada.");
+            } else {
+                int esperados = funcion.tiposParametros.size();
+                int recibidos = nodo.hijos.size();
+
+                if (esperados != recibidos) {
+                    errores.add(
+                        "La función '" + nombre + "' requiere " + esperados
+                        + " parámetro(s), pero recibió " + recibidos + "."
+                    );
+                }
+
+                int limite = Math.min(esperados, recibidos);
+
+                for (int i = 0; i < limite; i++) {
+                    String tipoEsperado = funcion.tiposParametros.get(i);
+                    String tipoRecibido = normalizarTipo(inferirTipo(nodo.hijos.get(i)));
+
+                    if (!tiposCompatibles(tipoEsperado, tipoRecibido)) {
+                        errores.add(
+                            "El parámetro " + (i + 1) + " de la función '" + nombre
+                            + "' debe ser de tipo '" + tipoEsperado
+                            + "', pero se recibió '" + tipoRecibido + "'."
+                        );
+                    }
+                }
+
+                if (!contextoFuncion && "void".equals(funcion.tipoRetorno)) {
+                    // Una llamada void puede utilizarse como instrucción,
+                    // pero no como parte de una expresión.
+                    if (esLlamadaDentroDeExpresion(nodo)) {
+                        errores.add(
+                            "La función '" + nombre
+                            + "' no devuelve un valor y no puede utilizarse en una expresión."
+                        );
+                    }
+                }
+            }
+        }
+
+        for (Nodo hijo : nodo.hijos) {
+            validarLlamadasFunciones(hijo, contextoFuncion);
+        }
+    }
+    
+    private static boolean esLlamadaDentroDeExpresion(Nodo llamada) {
+        // La validación completa del contexto de una llamada se realizará
+        // mediante el recorrido de sus padres en una siguiente mejora.
+        // Por ahora, este método evita asumir que toda llamada devuelve un valor.
+        return false;
+    }
+    
     public static void declararVariable(String nombre, String tipo) {
         if (tablaVariables.containsKey(nombre)) {
             errores.add("Variable '" + nombre + "' ya fue declarada.");
@@ -53,47 +241,141 @@ public class Semantico {
      * Ejecuta las validaciones semánticas del AST.
      */
     public static void validarPrograma(Nodo raiz) {
-        validarRetornos(raiz, false);
+        // Primero se registran todas las funciones.
+        registrarFunciones(raiz);
 
+        // Después se realizan las validaciones del programa.
+        validarLlamadasFunciones(raiz);
+        validarRetornos(raiz, false);
+        validarTiposRetorno(raiz);
         validarVariablesNoDeclaradas(
             raiz,
             new HashSet<String>(),
             new HashSet<String>()
         );
-
         validarTipos(raiz);
-
-        validarInicializacion(
-            raiz,
-            new HashSet<String>()
-        );
+        validarInicializacion(raiz, new HashSet<String>());
     }
 
-    /**
-     * Detecta return fuera de una función o método.
-     */
-    private static void validarRetornos(
+    private static void validarRetornos(Nodo nodo, boolean dentroFuncion) {
+        if (nodo == null) {
+            return;
+        }
+
+        // Al encontrar una función, sus instrucciones pertenecen
+        // al contexto de esa función.
+        boolean contextoFuncion = dentroFuncion || "funcion".equals(nodo.tipo);
+
+        // Un return solamente es válido dentro de una función.
+        if ("returnInstruccion".equals(nodo.tipo) && !contextoFuncion) {
+            errores.add(
+                "La instrucción 'return' aparece fuera de una función o método. "
+                + "No se puede traducir como código independiente."
+            );
+        }
+
+        // Recorrer los hijos conservando el contexto de la función.
+        for (Nodo hijo : nodo.hijos) {
+            validarRetornos(hijo, contextoFuncion);
+        }
+    }
+
+    private static void validarTiposRetorno(Nodo nodo) {
+        if (nodo == null) {
+            return;
+        }
+
+        if ("funcion".equals(nodo.tipo)) {
+            String nombre = nodo.valor;
+            String tipoRetorno = normalizarTipo(
+                    nodo.atributoPorDefecto("tipoRetorno", "void")
+            );
+
+            // El último hijo de la función es su cuerpo.
+            if (!nodo.hijos.isEmpty()) {
+                Nodo cuerpo = nodo.hijos.get(nodo.hijos.size() - 1);
+
+                validarRetornosDeFuncion(
+                        cuerpo,
+                        nombre,
+                        tipoRetorno
+                );
+            }
+
+            // No recorrer nuevamente el cuerpo desde el recorrido general.
+            return;
+        }
+
+        for (Nodo hijo : nodo.hijos) {
+            validarTiposRetorno(hijo);
+        }
+    }
+    
+    private static void validarRetornosDeFuncion(
             Nodo nodo,
-            boolean dentroFuncion) {
+            String nombreFuncion,
+            String tipoEsperado) {
 
         if (nodo == null) {
             return;
         }
 
-        if ("returnInstruccion".equals(nodo.tipo)
-                && !dentroFuncion) {
+        if ("returnInstruccion".equals(nodo.tipo)) {
 
-            error(
-                "La instrucción 'return' aparece fuera de una función "
-                + "o método. No se puede traducir como código independiente."
+            boolean tieneExpresion = !nodo.hijos.isEmpty();
+
+            // Las funciones void no deben devolver valores.
+            if ("void".equals(tipoEsperado)) {
+                if (tieneExpresion) {
+                    errores.add(
+                            "La función '" + nombreFuncion
+                            + "' es de tipo void y no puede devolver un valor."
+                    );
+                }
+
+                return;
+            }
+
+            // Las funciones con retorno deben devolver una expresión.
+            if (!tieneExpresion) {
+                errores.add(
+                        "La función '" + nombreFuncion
+                        + "' debe devolver un valor de tipo '"
+                        + tipoEsperado + "'."
+                );
+
+                return;
+            }
+
+            String tipoReal = normalizarTipo(
+                    inferirTipo(nodo.hijo(0))
             );
+
+            // Solo se valida cuando fue posible determinar el tipo.
+            if (tipoReal != null
+                    && !"desconocido".equals(tipoReal)
+                    && !tiposCompatibles(tipoEsperado, tipoReal)) {
+
+                errores.add(
+                        "La función '" + nombreFuncion
+                        + "' debe devolver un valor de tipo '"
+                        + tipoEsperado
+                        + "', pero devuelve '" + tipoReal + "'."
+                );
+            }
+
+            return;
         }
 
         for (Nodo hijo : nodo.hijos) {
-            validarRetornos(hijo, dentroFuncion);
+            validarRetornosDeFuncion(
+                    hijo,
+                    nombreFuncion,
+                    tipoEsperado
+            );
         }
     }
-
+    
     /**
      * Detecta identificadores que no aparecen en la tabla de variables
      * y que tampoco son variables locales de foreach o catch.
@@ -106,7 +388,36 @@ public class Semantico {
         if (nodo == null) {
             return;
         }
+        
+        // Las variables locales de una función incluyen sus parámetros.
+        if ("funcion".equals(nodo.tipo)) {
+            Set<String> variablesFuncion = new HashSet<>(variablesLocales);
 
+            // Todos los hijos, excepto el último, son parámetros.
+            int cantidadParametros = Math.max(0, nodo.hijos.size() - 1);
+
+            for (int i = 0; i < cantidadParametros; i++) {
+                Nodo parametro = nodo.hijos.get(i);
+
+                if ("parametro".equals(parametro.tipo)) {
+                    variablesFuncion.add(parametro.valor);
+                }
+            }
+
+            // Validar el cuerpo utilizando los parámetros como variables locales.
+            if (!nodo.hijos.isEmpty()) {
+                Nodo cuerpo = nodo.hijos.get(nodo.hijos.size() - 1);
+
+                validarVariablesNoDeclaradas(
+                    cuerpo,
+                    variablesFuncion,
+                    erroresReportados
+                );
+            }
+
+            return;
+        }
+        
         // Las variables declaradas durante el análisis sintáctico
         // ya están registradas en tablaVariables.
         comprobarVariable(

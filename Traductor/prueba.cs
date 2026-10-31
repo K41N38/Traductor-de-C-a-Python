@@ -5,11 +5,26 @@
             ciudad = "Madrid", pais = "España";
         bool activo = true;
         int puntuacion = 100;
+
         // Arreglos
         int[] edades = { 25, 30, 35, 40 };
         string[] frutas = { "manzana", "naranja", "plátano" };
         bool[] flags = { true, false, true };
         int[] numeros = { 1, 2, 3, 4, 5 };
+
+        // Funciones
+        static void Despedir()
+        {
+            Console.WriteLine("Adiós, mundo");
+        }
+        int Sumar(int a, int b)
+        {
+            int resultado = a + b;
+            return resultado;
+        }
+        int respuesta = Sumar(10, 5);
+        Console.WriteLine(respuesta);
+
         // WHILE principal
         int contador = 0;
         while (contador < 10)
@@ -310,3 +325,4 @@
                 break;
         }
         Console.WriteLine("Programa ejecutado exitosamente");
+        Despedir();

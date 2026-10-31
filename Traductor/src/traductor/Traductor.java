@@ -78,6 +78,8 @@ public class Traductor implements TraductorConstants {
       case LONG:
       case SHORT:
       case BYTE:
+      case VOID:
+      case STATIC:
       case COMENTARIO_LINEA:
       case COMENTARIO_BLOQUE:
       case LLAVE_IZQ:
@@ -98,41 +100,45 @@ public class Traductor implements TraductorConstants {
   Nodo n;
     if (jj_2_1(2)) {
       n = comentario();
-    } else if (jj_2_2(2)) {
+    } else if (jj_2_2(3)) {
+      n = declaracionFuncion();
+    } else if (jj_2_3(2)) {
       n = declaracionVariable();
-    } else if (jj_2_3(6)) {
+    } else if (jj_2_4(6)) {
       n = copiarArreglo();
-    } else if (jj_2_4(4)) {
+    } else if (jj_2_5(4)) {
       n = operacionArreglo();
-    } else if (jj_2_5(2)) {
-      n = asignacion();
     } else if (jj_2_6(2)) {
-      n = incrementoDecremento();
+      n = asignacion();
     } else if (jj_2_7(2)) {
-      n = condicion();
+      n = incrementoDecremento();
     } else if (jj_2_8(2)) {
-      n = manejoExcepciones();
+      n = condicion();
     } else if (jj_2_9(2)) {
-      n = throwInstruccion();
+      n = manejoExcepciones();
     } else if (jj_2_10(2)) {
-      n = cicloMientras();
+      n = throwInstruccion();
     } else if (jj_2_11(2)) {
-      n = cicloPara();
+      n = cicloMientras();
     } else if (jj_2_12(2)) {
-      n = cicloDoWhile();
+      n = cicloPara();
     } else if (jj_2_13(2)) {
-      n = cicloForeach();
+      n = cicloDoWhile();
     } else if (jj_2_14(2)) {
-      n = estructuraSwitch();
+      n = cicloForeach();
     } else if (jj_2_15(2)) {
-      n = escritura();
+      n = estructuraSwitch();
     } else if (jj_2_16(2)) {
-      n = breakInstruccion();
-    } else if (jj_2_17(2)) {
-      n = continueInstruccion();
+      n = escritura();
+    } else if (jj_2_17(2147483647)) {
+      n = llamadaFuncionInstruccion();
     } else if (jj_2_18(2)) {
-      n = returnInstruccion();
+      n = breakInstruccion();
     } else if (jj_2_19(2)) {
+      n = continueInstruccion();
+    } else if (jj_2_20(2)) {
+      n = returnInstruccion();
+    } else if (jj_2_21(2)) {
       n = bloque();
     } else {
       jj_consume_token(-1);
@@ -168,6 +174,225 @@ public class Traductor implements TraductorConstants {
             "lineaInicio",
             String.valueOf(t.beginLine)
         );
+        {if (true) return n;}
+    throw new Error("Missing return statement in function");
+  }
+
+// ------------------------------------------------------
+// DECLARACION DE FUNCIONES
+// ------------------------------------------------------
+  final public String tipoFuncion() throws ParseException {
+    Token t;
+    String tipo = "";
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case VOID:
+      t = jj_consume_token(VOID);
+                        mostrarToken(t); tipo = "void";
+      break;
+    case INT:
+      t = jj_consume_token(INT);
+                        mostrarToken(t); tipo = "int";
+      break;
+    case BOOL:
+      t = jj_consume_token(BOOL);
+                        mostrarToken(t); tipo = "bool";
+      break;
+    case BOOLEAN:
+      t = jj_consume_token(BOOLEAN);
+                        mostrarToken(t); tipo = "boolean";
+      break;
+    case STRING:
+      t = jj_consume_token(STRING);
+                        mostrarToken(t); tipo = "string";
+      break;
+    case CHAR:
+      t = jj_consume_token(CHAR);
+                        mostrarToken(t); tipo = "char";
+      break;
+    case DOUBLE:
+      t = jj_consume_token(DOUBLE);
+                        mostrarToken(t); tipo = "double";
+      break;
+    case FLOAT:
+      t = jj_consume_token(FLOAT);
+                        mostrarToken(t); tipo = "float";
+      break;
+    case LONG:
+      t = jj_consume_token(LONG);
+                        mostrarToken(t); tipo = "long";
+      break;
+    case SHORT:
+      t = jj_consume_token(SHORT);
+                        mostrarToken(t); tipo = "short";
+      break;
+    case BYTE:
+      t = jj_consume_token(BYTE);
+                        mostrarToken(t); tipo = "byte";
+      break;
+    default:
+      jj_la1[2] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+        {if (true) return tipo;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public String tipoParametro() throws ParseException {
+    Token t;
+    String tipo = "";
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case INT:
+      t = jj_consume_token(INT);
+                        mostrarToken(t); tipo = "int";
+      break;
+    case BOOL:
+      t = jj_consume_token(BOOL);
+                        mostrarToken(t); tipo = "bool";
+      break;
+    case BOOLEAN:
+      t = jj_consume_token(BOOLEAN);
+                        mostrarToken(t); tipo = "boolean";
+      break;
+    case STRING:
+      t = jj_consume_token(STRING);
+                        mostrarToken(t); tipo = "string";
+      break;
+    case CHAR:
+      t = jj_consume_token(CHAR);
+                        mostrarToken(t); tipo = "char";
+      break;
+    case DOUBLE:
+      t = jj_consume_token(DOUBLE);
+                        mostrarToken(t); tipo = "double";
+      break;
+    case FLOAT:
+      t = jj_consume_token(FLOAT);
+                        mostrarToken(t); tipo = "float";
+      break;
+    case LONG:
+      t = jj_consume_token(LONG);
+                        mostrarToken(t); tipo = "long";
+      break;
+    case SHORT:
+      t = jj_consume_token(SHORT);
+                        mostrarToken(t); tipo = "short";
+      break;
+    case BYTE:
+      t = jj_consume_token(BYTE);
+                        mostrarToken(t); tipo = "byte";
+      break;
+    default:
+      jj_la1[3] = jj_gen;
+      jj_consume_token(-1);
+      throw new ParseException();
+    }
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case CORCHETE_IZQ:
+      t = jj_consume_token(CORCHETE_IZQ);
+                           mostrarToken(t);
+      t = jj_consume_token(CORCHETE_DER);
+                           mostrarToken(t);
+          tipo = tipo + "[]";
+      break;
+    default:
+      jj_la1[4] = jj_gen;
+      ;
+    }
+        {if (true) return tipo;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public Nodo declaracionFuncion() throws ParseException {
+    Token t;
+    String tipoRetorno;
+    String tipoDato;
+    String modificador = "ninguno";
+
+    Nodo n = new Nodo("funcion");
+    Nodo parametro;
+    Nodo cuerpo;
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case STATIC:
+      t = jj_consume_token(STATIC);
+            mostrarToken(t);
+            modificador = "static";
+      break;
+    default:
+      jj_la1[5] = jj_gen;
+      ;
+    }
+    tipoRetorno = tipoFuncion();
+        n.atributo("tipoRetorno", tipoRetorno);
+        n.atributo("modificador", modificador);
+    t = jj_consume_token(IDENTIFICADOR);
+        mostrarToken(t);
+        n.valor = t.image;
+    t = jj_consume_token(PARENTESIS_IZQ);
+        mostrarToken(t);
+    switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+    case INT:
+    case BOOL:
+    case BOOLEAN:
+    case STRING:
+    case CHAR:
+    case DOUBLE:
+    case FLOAT:
+    case LONG:
+    case SHORT:
+    case BYTE:
+      parametro = parametroFuncion();
+            n.agregar(parametro);
+      label_2:
+      while (true) {
+        switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+        case COMA:
+          ;
+          break;
+        default:
+          jj_la1[6] = jj_gen;
+          break label_2;
+        }
+        t = jj_consume_token(COMA);
+                mostrarToken(t);
+        parametro = parametroFuncion();
+                n.agregar(parametro);
+      }
+      break;
+    default:
+      jj_la1[7] = jj_gen;
+      ;
+    }
+    t = jj_consume_token(PARENTESIS_DER);
+        mostrarToken(t);
+    cuerpo = bloque();
+        n.agregar(cuerpo);
+        {if (true) return n;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public Nodo parametroFuncion() throws ParseException {
+    Token t;
+    String tipoDato;
+    Nodo n = new Nodo("parametro");
+    tipoDato = tipoParametro();
+    t = jj_consume_token(IDENTIFICADOR);
+        mostrarToken(t);
+        n.valor = t.image;
+        n.atributo("tipoDato", tipoDato);
+        {if (true) return n;}
+    throw new Error("Missing return statement in function");
+  }
+
+// ------------------------------------------------------
+// LLAMADA A FUNCION COMO INSTRUCCION
+// ------------------------------------------------------
+  final public Nodo llamadaFuncionInstruccion() throws ParseException {
+    Token t;
+    Nodo n;
+    n = llamadaFuncion();
+    t = jj_consume_token(PUNTO_Y_COMA);
+                       mostrarToken(t);
         {if (true) return n;}
     throw new Error("Missing return statement in function");
   }
@@ -223,7 +448,7 @@ public class Traductor implements TraductorConstants {
                         mostrarToken(t); tipoDato = "byte";
       break;
     default:
-      jj_la1[2] = jj_gen;
+      jj_la1[8] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -236,20 +461,20 @@ public class Traductor implements TraductorConstants {
           tipoDato = tipoDato + "[]";
       break;
     default:
-      jj_la1[3] = jj_gen;
+      jj_la1[9] = jj_gen;
       ;
     }
     variable = declaracionVariableElemento(tipoDato);
         lista.agregar(variable);
-    label_2:
+    label_3:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case COMA:
         ;
         break;
       default:
-        jj_la1[4] = jj_gen;
-        break label_2;
+        jj_la1[10] = jj_gen;
+        break label_3;
       }
       t = jj_consume_token(COMA);
                    mostrarToken(t);
@@ -278,7 +503,7 @@ public class Traductor implements TraductorConstants {
                           n.agregar(exp);
       break;
     default:
-      jj_la1[5] = jj_gen;
+      jj_la1[11] = jj_gen;
       ;
     }
       {if (true) return n;}
@@ -332,7 +557,7 @@ public class Traductor implements TraductorConstants {
                         mostrarToken(t); tipoDato = "byte";
       break;
     default:
-      jj_la1[6] = jj_gen;
+      jj_la1[12] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -345,20 +570,20 @@ public class Traductor implements TraductorConstants {
           tipoDato = tipoDato + "[]";
       break;
     default:
-      jj_la1[7] = jj_gen;
+      jj_la1[13] = jj_gen;
       ;
     }
     variable = declaracionVariableElemento(tipoDato);
         lista.agregar(variable);
-    label_3:
+    label_4:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case COMA:
         ;
         break;
       default:
-        jj_la1[8] = jj_gen;
-        break label_3;
+        jj_la1[14] = jj_gen;
+        break label_4;
       }
       t = jj_consume_token(COMA);
                    mostrarToken(t);
@@ -392,7 +617,7 @@ public class Traductor implements TraductorConstants {
             n.agregar(indice);
       break;
     default:
-      jj_la1[9] = jj_gen;
+      jj_la1[15] = jj_gen;
       ;
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -427,7 +652,7 @@ public class Traductor implements TraductorConstants {
             n.atributo("operadorAsignacion", "%=");
       break;
     default:
-      jj_la1[10] = jj_gen;
+      jj_la1[16] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -459,7 +684,7 @@ public class Traductor implements TraductorConstants {
             n.atributo("operador", "--");
       break;
     default:
-      jj_la1[11] = jj_gen;
+      jj_la1[17] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -493,7 +718,7 @@ public class Traductor implements TraductorConstants {
                          n.agregar(bElse);
       break;
     default:
-      jj_la1[12] = jj_gen;
+      jj_la1[18] = jj_gen;
       ;
     }
       {if (true) return n;}
@@ -514,15 +739,15 @@ public class Traductor implements TraductorConstants {
               mostrarToken(t);
     cuerpo = bloque();
         n.agregar(cuerpo);
-    label_4:
+    label_5:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case CATCH:
         ;
         break;
       default:
-        jj_la1[13] = jj_gen;
-        break label_4;
+        jj_la1[19] = jj_gen;
+        break label_5;
       }
       captura = clausulaCatch();
             n.agregar(captura);
@@ -538,7 +763,7 @@ public class Traductor implements TraductorConstants {
             n.agregar(cuerpo);
       break;
     default:
-      jj_la1[14] = jj_gen;
+      jj_la1[20] = jj_gen;
       ;
     }
         if (!tieneCatch && !tieneFinally) {
@@ -573,14 +798,14 @@ public class Traductor implements TraductorConstants {
                 variableExcepcion = t.image;
         break;
       default:
-        jj_la1[15] = jj_gen;
+        jj_la1[21] = jj_gen;
         ;
       }
       t = jj_consume_token(PARENTESIS_DER);
                              mostrarToken(t);
       break;
     default:
-      jj_la1[16] = jj_gen;
+      jj_la1[22] = jj_gen;
       ;
     }
         if (!tipoExcepcion.isEmpty()) {
@@ -605,7 +830,7 @@ public class Traductor implements TraductorConstants {
     Nodo exp;
     t = jj_consume_token(THROW);
                 mostrarToken(t);
-    if (jj_2_20(1)) {
+    if (jj_2_22(1)) {
       exp = expresion();
             n.agregar(exp);
     } else {
@@ -687,7 +912,7 @@ public class Traductor implements TraductorConstants {
                         mostrarToken(t); n.atributo("tipoDato", "boolean");
       break;
     default:
-      jj_la1[17] = jj_gen;
+      jj_la1[23] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -720,7 +945,7 @@ public class Traductor implements TraductorConstants {
                          mostrarToken(t);
     t = jj_consume_token(LLAVE_IZQ);
                     mostrarToken(t);
-    label_5:
+    label_6:
     while (true) {
       caso = casoSwitch();
                           n.agregar(caso);
@@ -729,8 +954,8 @@ public class Traductor implements TraductorConstants {
         ;
         break;
       default:
-        jj_la1[18] = jj_gen;
-        break label_5;
+        jj_la1[24] = jj_gen;
+        break label_6;
       }
     }
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
@@ -739,7 +964,7 @@ public class Traductor implements TraductorConstants {
                                  n.agregar(caso);
       break;
     default:
-      jj_la1[19] = jj_gen;
+      jj_la1[25] = jj_gen;
       ;
     }
     t = jj_consume_token(LLAVE_DER);
@@ -754,57 +979,6 @@ public class Traductor implements TraductorConstants {
                mostrarToken(t);
     val = valor();
                   n.agregar(val);
-    t = jj_consume_token(DOS_PUNTOS);
-                     mostrarToken(t);
-    label_6:
-    while (true) {
-      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
-      case IF:
-      case TRY:
-      case THROW:
-      case WHILE:
-      case FOR:
-      case DO:
-      case BREAK:
-      case CONTINUE:
-      case RETURN:
-      case SWITCH:
-      case PRINT:
-      case PRINTLN:
-      case CONSOLE:
-      case FOREACH:
-      case INT:
-      case BOOL:
-      case BOOLEAN:
-      case STRING:
-      case CHAR:
-      case DOUBLE:
-      case FLOAT:
-      case LONG:
-      case SHORT:
-      case BYTE:
-      case COMENTARIO_LINEA:
-      case COMENTARIO_BLOQUE:
-      case LLAVE_IZQ:
-      case IDENTIFICADOR:
-        ;
-        break;
-      default:
-        jj_la1[20] = jj_gen;
-        break label_6;
-      }
-      inst = instruccion();
-                           n.agregar(inst);
-    }
-      {if (true) return n;}
-    throw new Error("Missing return statement in function");
-  }
-
-  final public Nodo casoDefaultSwitch() throws ParseException {
-  Token t; Nodo n = new Nodo("casoDefault"); Nodo inst;
-      regla("default -> default : instrucciones");
-    t = jj_consume_token(DEFAULT_KW);
-                     mostrarToken(t);
     t = jj_consume_token(DOS_PUNTOS);
                      mostrarToken(t);
     label_7:
@@ -834,6 +1008,8 @@ public class Traductor implements TraductorConstants {
       case LONG:
       case SHORT:
       case BYTE:
+      case VOID:
+      case STATIC:
       case COMENTARIO_LINEA:
       case COMENTARIO_BLOQUE:
       case LLAVE_IZQ:
@@ -841,8 +1017,61 @@ public class Traductor implements TraductorConstants {
         ;
         break;
       default:
-        jj_la1[21] = jj_gen;
+        jj_la1[26] = jj_gen;
         break label_7;
+      }
+      inst = instruccion();
+                           n.agregar(inst);
+    }
+      {if (true) return n;}
+    throw new Error("Missing return statement in function");
+  }
+
+  final public Nodo casoDefaultSwitch() throws ParseException {
+  Token t; Nodo n = new Nodo("casoDefault"); Nodo inst;
+      regla("default -> default : instrucciones");
+    t = jj_consume_token(DEFAULT_KW);
+                     mostrarToken(t);
+    t = jj_consume_token(DOS_PUNTOS);
+                     mostrarToken(t);
+    label_8:
+    while (true) {
+      switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
+      case IF:
+      case TRY:
+      case THROW:
+      case WHILE:
+      case FOR:
+      case DO:
+      case BREAK:
+      case CONTINUE:
+      case RETURN:
+      case SWITCH:
+      case PRINT:
+      case PRINTLN:
+      case CONSOLE:
+      case FOREACH:
+      case INT:
+      case BOOL:
+      case BOOLEAN:
+      case STRING:
+      case CHAR:
+      case DOUBLE:
+      case FLOAT:
+      case LONG:
+      case SHORT:
+      case BYTE:
+      case VOID:
+      case STATIC:
+      case COMENTARIO_LINEA:
+      case COMENTARIO_BLOQUE:
+      case LLAVE_IZQ:
+      case IDENTIFICADOR:
+        ;
+        break;
+      default:
+        jj_la1[27] = jj_gen;
+        break label_8;
       }
       inst = instruccion();
                            n.agregar(inst);
@@ -879,7 +1108,7 @@ public class Traductor implements TraductorConstants {
       regla("return -> return (expresion)? puntocoma");
     t = jj_consume_token(RETURN);
                  mostrarToken(t);
-    if (jj_2_21(1)) {
+    if (jj_2_23(1)) {
       exp = expresion();
                         n.agregar(exp);
     } else {
@@ -902,9 +1131,9 @@ public class Traductor implements TraductorConstants {
               mostrarToken(t);
     t = jj_consume_token(PARENTESIS_IZQ);
                          mostrarToken(t);
-    if (jj_2_22(2147483647)) {
+    if (jj_2_24(2147483647)) {
           n.agregar(new Nodo("sinInicializacion"));
-    } else if (jj_2_23(2)) {
+    } else if (jj_2_25(2)) {
       init = declaracionVariableFor();
                                         n.agregar(init);
     } else {
@@ -914,7 +1143,7 @@ public class Traductor implements TraductorConstants {
                                   n.agregar(init);
         break;
       default:
-        jj_la1[22] = jj_gen;
+        jj_la1[28] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -979,7 +1208,7 @@ public class Traductor implements TraductorConstants {
                 n.atributo("operadorAsignacion", "%=");
         break;
       default:
-        jj_la1[23] = jj_gen;
+        jj_la1[29] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -997,7 +1226,7 @@ public class Traductor implements TraductorConstants {
             n.atributo("operadorAsignacion", "--");
       break;
     default:
-      jj_la1[24] = jj_gen;
+      jj_la1[30] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1025,7 +1254,7 @@ public class Traductor implements TraductorConstants {
                   mostrarToken(t); n.atributo("variante", "println");
         break;
       default:
-        jj_la1[25] = jj_gen;
+        jj_la1[31] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1063,7 +1292,7 @@ public class Traductor implements TraductorConstants {
           t = jj_consume_token(READKEY);
           break;
         default:
-          jj_la1[26] = jj_gen;
+          jj_la1[32] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
@@ -1075,7 +1304,7 @@ public class Traductor implements TraductorConstants {
                                          mostrarToken(t);
         break;
       default:
-        jj_la1[27] = jj_gen;
+        jj_la1[33] = jj_gen;
         jj_consume_token(-1);
         throw new ParseException();
       }
@@ -1083,7 +1312,7 @@ public class Traductor implements TraductorConstants {
                            mostrarToken(t);
       break;
     default:
-      jj_la1[28] = jj_gen;
+      jj_la1[34] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1099,7 +1328,7 @@ public class Traductor implements TraductorConstants {
       regla("bloque -> { instrucciones* }");
     t = jj_consume_token(LLAVE_IZQ);
                     mostrarToken(t);
-    label_8:
+    label_9:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case IF:
@@ -1126,6 +1355,8 @@ public class Traductor implements TraductorConstants {
       case LONG:
       case SHORT:
       case BYTE:
+      case VOID:
+      case STATIC:
       case COMENTARIO_LINEA:
       case COMENTARIO_BLOQUE:
       case LLAVE_IZQ:
@@ -1133,8 +1364,8 @@ public class Traductor implements TraductorConstants {
         ;
         break;
       default:
-        jj_la1[29] = jj_gen;
-        break label_8;
+        jj_la1[35] = jj_gen;
+        break label_9;
       }
       inst = instruccion();
                            n.agregar(inst);
@@ -1157,15 +1388,15 @@ public class Traductor implements TraductorConstants {
   final public Nodo expresionOr() throws ParseException {
   Nodo izquierdo, derecho, n; Token t;
     izquierdo = expresionAnd();
-    label_9:
+    label_10:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case OR_LOGICO:
         ;
         break;
       default:
-        jj_la1[30] = jj_gen;
-        break label_9;
+        jj_la1[36] = jj_gen;
+        break label_10;
       }
       t = jj_consume_token(OR_LOGICO);
             mostrarToken(t);
@@ -1183,15 +1414,15 @@ public class Traductor implements TraductorConstants {
   final public Nodo expresionAnd() throws ParseException {
   Nodo izquierdo, derecho, n; Token t;
     izquierdo = expresionNot();
-    label_10:
+    label_11:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case AND_LOGICO:
         ;
         break;
       default:
-        jj_la1[31] = jj_gen;
-        break label_10;
+        jj_la1[37] = jj_gen;
+        break label_11;
       }
       t = jj_consume_token(AND_LOGICO);
             mostrarToken(t);
@@ -1230,8 +1461,8 @@ public class Traductor implements TraductorConstants {
           {if (true) return resultado;}
       break;
     default:
-      jj_la1[32] = jj_gen;
-      if (jj_2_24(1)) {
+      jj_la1[38] = jj_gen;
+      if (jj_2_26(1)) {
         n = expresionRelacional();
           {if (true) return n;}
       } else {
@@ -1261,7 +1492,7 @@ public class Traductor implements TraductorConstants {
             {if (true) return n;}
       break;
     default:
-      jj_la1[33] = jj_gen;
+      jj_la1[39] = jj_gen;
       ;
     }
         {if (true) return izquierdo;}
@@ -1296,7 +1527,7 @@ public class Traductor implements TraductorConstants {
                           mostrarToken(t); {if (true) return "!=";}
       break;
     default:
-      jj_la1[34] = jj_gen;
+      jj_la1[40] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1316,7 +1547,7 @@ public class Traductor implements TraductorConstants {
   final public Nodo expresionAditiva() throws ParseException {
   Nodo izquierdo, derecho, n; String op;
     izquierdo = expresionMultiplicativa();
-    label_11:
+    label_12:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case SUMA:
@@ -1324,8 +1555,8 @@ public class Traductor implements TraductorConstants {
         ;
         break;
       default:
-        jj_la1[35] = jj_gen;
-        break label_11;
+        jj_la1[41] = jj_gen;
+        break label_12;
       }
       op = operadorSumaResta();
       derecho = expresionMultiplicativa();
@@ -1344,7 +1575,7 @@ public class Traductor implements TraductorConstants {
   final public Nodo expresionMultiplicativa() throws ParseException {
   Nodo izquierdo, derecho, n; String op;
     izquierdo = expresionUnaria();
-    label_12:
+    label_13:
     while (true) {
       switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
       case MULT:
@@ -1353,8 +1584,8 @@ public class Traductor implements TraductorConstants {
         ;
         break;
       default:
-        jj_la1[36] = jj_gen;
-        break label_12;
+        jj_la1[42] = jj_gen;
+        break label_13;
       }
       op = operadorMultiplicativo();
       derecho = expresionUnaria();
@@ -1383,8 +1614,8 @@ public class Traductor implements TraductorConstants {
           {if (true) return resultado;}
       break;
     default:
-      jj_la1[37] = jj_gen;
-      if (jj_2_25(1)) {
+      jj_la1[43] = jj_gen;
+      if (jj_2_27(1)) {
         n = expresionPrimaria();
           {if (true) return n;}
       } else {
@@ -1404,18 +1635,18 @@ public class Traductor implements TraductorConstants {
         n.valor = t.image;
     t = jj_consume_token(PARENTESIS_IZQ);
                          mostrarToken(t);
-    if (jj_2_26(1)) {
+    if (jj_2_28(1)) {
       argumento = expresion();
             n.agregar(argumento);
-      label_13:
+      label_14:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case COMA:
           ;
           break;
         default:
-          jj_la1[38] = jj_gen;
-          break label_13;
+          jj_la1[44] = jj_gen;
+          break label_14;
         }
         t = jj_consume_token(COMA);
                        mostrarToken(t);
@@ -1448,7 +1679,7 @@ public class Traductor implements TraductorConstants {
             tipo = "double";
       break;
     default:
-      jj_la1[39] = jj_gen;
+      jj_la1[45] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1555,7 +1786,7 @@ public class Traductor implements TraductorConstants {
                         mostrarToken(t);
       break;
     default:
-      jj_la1[40] = jj_gen;
+      jj_la1[46] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1574,18 +1805,18 @@ public class Traductor implements TraductorConstants {
     Nodo elemento;
     t = jj_consume_token(LLAVE_IZQ);
                     mostrarToken(t);
-    if (jj_2_27(1)) {
+    if (jj_2_29(1)) {
       elemento = expresion();
             n.agregar(elemento);
-      label_14:
+      label_15:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case COMA:
           ;
           break;
         default:
-          jj_la1[41] = jj_gen;
-          break label_14;
+          jj_la1[47] = jj_gen;
+          break label_15;
         }
         t = jj_consume_token(COMA);
                        mostrarToken(t);
@@ -1723,18 +1954,18 @@ public class Traductor implements TraductorConstants {
         n.atributo("tipo", t.image);
     t = jj_consume_token(PARENTESIS_IZQ);
                          mostrarToken(t);
-    if (jj_2_28(1)) {
+    if (jj_2_30(1)) {
       argumento = expresion();
             n.agregar(argumento);
-      label_15:
+      label_16:
       while (true) {
         switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
         case COMA:
           ;
           break;
         default:
-          jj_la1[42] = jj_gen;
-          break label_15;
+          jj_la1[48] = jj_gen;
+          break label_16;
         }
         t = jj_consume_token(COMA);
                        mostrarToken(t);
@@ -1759,10 +1990,10 @@ public class Traductor implements TraductorConstants {
             && getToken(4).kind == PARENTESIS_IZQ) {
       n = busquedaIndiceArreglo();
         {if (true) return n;}
-    } else if (jj_2_29(2147483647)) {
+    } else if (jj_2_31(2147483647)) {
       n = conversionParse();
         {if (true) return n;}
-    } else if (jj_2_30(2147483647)) {
+    } else if (jj_2_32(2147483647)) {
       n = conversionParse();
         {if (true) return n;}
     } else if (getToken(1).image.equals("Convert")
@@ -1773,7 +2004,7 @@ public class Traductor implements TraductorConstants {
             )) {
       n = conversionConvert();
         {if (true) return n;}
-    } else if (jj_2_31(2)) {
+    } else if (jj_2_33(2)) {
       n = llamadaFuncion();
         {if (true) return n;}
     } else {
@@ -1792,8 +2023,8 @@ public class Traductor implements TraductorConstants {
           {if (true) return new Nodo("lecturaConsola");}
         break;
       default:
-        jj_la1[44] = jj_gen;
-        if (jj_2_32(2147483647)) {
+        jj_la1[50] = jj_gen;
+        if (jj_2_34(2147483647)) {
           n = nuevaExcepcion();
           {if (true) return n;}
         } else {
@@ -1844,13 +2075,13 @@ public class Traductor implements TraductorConstants {
               }
               break;
             default:
-              jj_la1[43] = jj_gen;
+              jj_la1[49] = jj_gen;
               ;
             }
           {if (true) return n;}
             break;
           default:
-            jj_la1[45] = jj_gen;
+            jj_la1[51] = jj_gen;
             jj_consume_token(-1);
             throw new ParseException();
           }
@@ -1872,7 +2103,7 @@ public class Traductor implements TraductorConstants {
                   mostrarToken(t); {if (true) return "-";}
       break;
     default:
-      jj_la1[46] = jj_gen;
+      jj_la1[52] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1895,7 +2126,7 @@ public class Traductor implements TraductorConstants {
                  mostrarToken(t); {if (true) return "%";}
       break;
     default:
-      jj_la1[47] = jj_gen;
+      jj_la1[53] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1926,7 +2157,7 @@ public class Traductor implements TraductorConstants {
                   mostrarToken(t); {if (true) return "%";}
       break;
     default:
-      jj_la1[48] = jj_gen;
+      jj_la1[54] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -1977,13 +2208,13 @@ public class Traductor implements TraductorConstants {
             }
           break;
         default:
-          jj_la1[49] = jj_gen;
+          jj_la1[55] = jj_gen;
           jj_consume_token(-1);
           throw new ParseException();
         }
         break;
       default:
-        jj_la1[50] = jj_gen;
+        jj_la1[56] = jj_gen;
         ;
       }
         {if (true) return n;}
@@ -2031,7 +2262,7 @@ public class Traductor implements TraductorConstants {
           {if (true) return n;}
       break;
     default:
-      jj_la1[51] = jj_gen;
+      jj_la1[57] = jj_gen;
       jj_consume_token(-1);
       throw new ParseException();
     }
@@ -2262,142 +2493,123 @@ public class Traductor implements TraductorConstants {
     finally { jj_save(31, xla); }
   }
 
-  private boolean jj_3_15() {
-    if (jj_3R_30()) return true;
-    return false;
+  private boolean jj_2_33(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_33(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(32, xla); }
   }
 
-  private boolean jj_3R_25() {
-    if (jj_scan_token(WHILE)) return true;
-    if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    return false;
+  private boolean jj_2_34(int xla) {
+    jj_la = xla; jj_lastpos = jj_scanpos = token;
+    try { return !jj_3_34(); }
+    catch(LookaheadSuccess ls) { return true; }
+    finally { jj_save(33, xla); }
   }
 
-  private boolean jj_3R_56() {
-    if (jj_scan_token(MULT_ASIGNACION)) return true;
-    return false;
-  }
-
-  private boolean jj_3_14() {
+  private boolean jj_3_13() {
     if (jj_3R_29()) return true;
     return false;
   }
 
-  private boolean jj_3_13() {
-    if (jj_3R_28()) return true;
+  private boolean jj_3R_23() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_63()) {
+    jj_scanpos = xsp;
+    if (jj_3R_64()) return true;
+    }
     return false;
   }
 
   private boolean jj_3_12() {
-    if (jj_3R_27()) return true;
+    if (jj_3R_28()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_123() {
+    if (jj_3R_41()) return true;
     return false;
   }
 
   private boolean jj_3_11() {
-    if (jj_3R_26()) return true;
-    return false;
-  }
-
-  private boolean jj_3_10() {
-    if (jj_3R_25()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_55() {
-    if (jj_scan_token(RESTA_ASIGNACION)) return true;
-    return false;
-  }
-
-  private boolean jj_3_9() {
-    if (jj_3R_24()) return true;
-    return false;
-  }
-
-  private boolean jj_3_8() {
-    if (jj_3R_23()) return true;
-    return false;
-  }
-
-  private boolean jj_3_7() {
-    if (jj_3R_22()) return true;
-    return false;
-  }
-
-  private boolean jj_3_6() {
-    if (jj_3R_21()) return true;
-    return false;
-  }
-
-  private boolean jj_3_5() {
-    if (jj_3R_20()) return true;
-    return false;
-  }
-
-  private boolean jj_3_4() {
-    if (jj_3R_19()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_54() {
-    if (jj_scan_token(SUMA_ASIGNACION)) return true;
+    if (jj_3R_27()) return true;
     return false;
   }
 
   private boolean jj_3R_37() {
-    if (jj_3R_35()) return true;
+    if (jj_3R_68()) return true;
+    return false;
+  }
+
+  private boolean jj_3_10() {
+    if (jj_3R_26()) return true;
+    return false;
+  }
+
+  private boolean jj_3_9() {
+    if (jj_3R_25()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_109() {
+    if (jj_scan_token(NEW)) return true;
+    return false;
+  }
+
+  private boolean jj_3_8() {
+    if (jj_3R_24()) return true;
+    return false;
+  }
+
+  private boolean jj_3_7() {
+    if (jj_3R_23()) return true;
+    return false;
+  }
+
+  private boolean jj_3_6() {
+    if (jj_3R_22()) return true;
+    return false;
+  }
+
+  private boolean jj_3_5() {
+    if (jj_3R_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3_4() {
+    if (jj_3R_20()) return true;
     return false;
   }
 
   private boolean jj_3_3() {
-    if (jj_3R_18()) return true;
-    return false;
-  }
-
-  private boolean jj_3_20() {
-    if (jj_3R_35()) return true;
+    if (jj_3R_19()) return true;
     return false;
   }
 
   private boolean jj_3_2() {
-    if (jj_3R_17()) return true;
+    if (jj_3R_18()) return true;
     return false;
   }
 
   private boolean jj_3_1() {
-    if (jj_3R_16()) return true;
+    if (jj_3R_17()) return true;
     return false;
   }
 
-  private boolean jj_3R_18() {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    if (jj_scan_token(PUNTO)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    if (jj_scan_token(COMA)) return true;
+  private boolean jj_3R_29() {
+    if (jj_scan_token(DO)) return true;
+    if (jj_3R_36()) return true;
     return false;
   }
 
-  private boolean jj_3R_53() {
-    if (jj_scan_token(ASIGNACION)) return true;
+  private boolean jj_3R_62() {
+    if (jj_scan_token(MOD_ASIGNACION)) return true;
     return false;
   }
 
-  private boolean jj_3_24() {
-    if (jj_3R_37()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_24() {
-    if (jj_scan_token(THROW)) return true;
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3_20()) jj_scanpos = xsp;
-    if (jj_scan_token(PUNTO_Y_COMA)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_88() {
+  private boolean jj_3R_103() {
     Token xsp;
     xsp = jj_scanpos;
     if (jj_3_1()) {
@@ -2432,11 +2644,17 @@ public class Traductor implements TraductorConstants {
     jj_scanpos = xsp;
     if (jj_3_16()) {
     jj_scanpos = xsp;
-    if (jj_3_17()) {
+    if (jj_3R_112()) {
     jj_scanpos = xsp;
     if (jj_3_18()) {
     jj_scanpos = xsp;
-    if (jj_3_19()) return true;
+    if (jj_3_19()) {
+    jj_scanpos = xsp;
+    if (jj_3_20()) {
+    jj_scanpos = xsp;
+    if (jj_3_21()) return true;
+    }
+    }
     }
     }
     }
@@ -2458,38 +2676,103 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_92() {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
+  private boolean jj_3R_61() {
+    if (jj_scan_token(DIV_ASIGNACION)) return true;
     return false;
   }
 
-  private boolean jj_3R_52() {
-    if (jj_scan_token(CORCHETE_IZQ)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_85() {
+  private boolean jj_3R_27() {
+    if (jj_scan_token(WHILE)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_60() {
+    if (jj_scan_token(MULT_ASIGNACION)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_59() {
+    if (jj_scan_token(RESTA_ASIGNACION)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_58() {
+    if (jj_scan_token(SUMA_ASIGNACION)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_39() {
+    if (jj_3R_37()) return true;
+    return false;
+  }
+
+  private boolean jj_3_22() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
   private boolean jj_3R_20() {
     if (jj_scan_token(IDENTIFICADOR)) return true;
+    if (jj_scan_token(PUNTO)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    if (jj_scan_token(COMA)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_57() {
+    if (jj_scan_token(ASIGNACION)) return true;
+    return false;
+  }
+
+  private boolean jj_3_26() {
+    if (jj_3R_39()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_26() {
+    if (jj_scan_token(THROW)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_52()) jj_scanpos = xsp;
+    if (jj_3_22()) jj_scanpos = xsp;
+    if (jj_scan_token(PUNTO_Y_COMA)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_107() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_56() {
+    if (jj_scan_token(CORCHETE_IZQ)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_89() {
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_22() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_53()) {
-    jj_scanpos = xsp;
-    if (jj_3R_54()) {
-    jj_scanpos = xsp;
-    if (jj_3R_55()) {
-    jj_scanpos = xsp;
-    if (jj_3R_56()) {
-    jj_scanpos = xsp;
+    if (jj_3R_56()) jj_scanpos = xsp;
+    xsp = jj_scanpos;
     if (jj_3R_57()) {
     jj_scanpos = xsp;
-    if (jj_3R_58()) return true;
+    if (jj_3R_58()) {
+    jj_scanpos = xsp;
+    if (jj_3R_59()) {
+    jj_scanpos = xsp;
+    if (jj_3R_60()) {
+    jj_scanpos = xsp;
+    if (jj_3R_61()) {
+    jj_scanpos = xsp;
+    if (jj_3R_62()) return true;
     }
     }
     }
@@ -2498,160 +2781,167 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_84() {
-    if (jj_3R_96()) return true;
+  private boolean jj_3R_88() {
+    if (jj_3R_111()) return true;
     return false;
   }
 
-  private boolean jj_3R_83() {
-    if (jj_3R_95()) return true;
+  private boolean jj_3R_87() {
+    if (jj_3R_110()) return true;
     return false;
   }
 
-  private boolean jj_3_32() {
+  private boolean jj_3_34() {
     if (jj_scan_token(NEW)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3_22() {
+  private boolean jj_3_24() {
     if (jj_scan_token(PUNTO_Y_COMA)) return true;
     return false;
   }
 
-  private boolean jj_3R_82() {
-    if (jj_3R_94()) return true;
+  private boolean jj_3R_86() {
+    if (jj_3R_109()) return true;
     return false;
   }
 
-  private boolean jj_3_23() {
-    if (jj_3R_36()) return true;
+  private boolean jj_3R_42() {
+    if (jj_scan_token(STATIC)) return true;
     return false;
   }
 
-  private boolean jj_3R_99() {
+  private boolean jj_3_25() {
+    if (jj_3R_38()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_115() {
     if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
-  private boolean jj_3R_81() {
-    if (jj_3R_93()) return true;
+  private boolean jj_3R_85() {
+    if (jj_3R_108()) return true;
     return false;
   }
 
-  private boolean jj_3R_90() {
+  private boolean jj_3R_18() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_42()) jj_scanpos = xsp;
+    if (jj_3R_43()) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_105() {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  private boolean jj_3R_98() {
+  private boolean jj_3R_114() {
     if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  private boolean jj_3R_75() {
+  private boolean jj_3R_79() {
     if (jj_scan_token(CORCHETE_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_74() {
+  private boolean jj_3R_78() {
     if (jj_scan_token(BYTE)) return true;
     return false;
   }
 
-  private boolean jj_3R_91() {
+  private boolean jj_3R_106() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_98()) {
+    if (jj_3R_114()) {
     jj_scanpos = xsp;
-    if (jj_3R_99()) return true;
+    if (jj_3R_115()) return true;
     }
     return false;
   }
 
-  private boolean jj_3R_73() {
+  private boolean jj_3R_77() {
     if (jj_scan_token(SHORT)) return true;
     return false;
   }
 
-  private boolean jj_3R_106() {
+  private boolean jj_3R_122() {
     if (jj_scan_token(NULL)) return true;
     return false;
   }
 
-  private boolean jj_3R_72() {
+  private boolean jj_3R_76() {
     if (jj_scan_token(LONG)) return true;
     return false;
   }
 
-  private boolean jj_3R_26() {
+  private boolean jj_3R_28() {
     if (jj_scan_token(FOR)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_71() {
+  private boolean jj_3R_75() {
     if (jj_scan_token(FLOAT)) return true;
     return false;
   }
 
-  private boolean jj_3R_70() {
+  private boolean jj_3R_74() {
     if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
-  private boolean jj_3R_69() {
+  private boolean jj_3R_73() {
     if (jj_scan_token(CHAR)) return true;
     return false;
   }
 
-  private boolean jj_3R_68() {
+  private boolean jj_3R_72() {
     if (jj_scan_token(STRING)) return true;
     return false;
   }
 
-  private boolean jj_3R_67() {
+  private boolean jj_3R_71() {
     if (jj_scan_token(BOOLEAN)) return true;
     return false;
   }
 
-  private boolean jj_3R_66() {
+  private boolean jj_3R_70() {
     if (jj_scan_token(BOOL)) return true;
     return false;
   }
 
-  private boolean jj_3R_65() {
+  private boolean jj_3R_69() {
     if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  private boolean jj_3R_105() {
+  private boolean jj_3R_121() {
     if (jj_scan_token(FALSE)) return true;
     return false;
   }
 
-  private boolean jj_3R_80() {
+  private boolean jj_3R_84() {
     if (jj_scan_token(CONSOLE)) return true;
     return false;
   }
 
-  private boolean jj_3_21() {
-    if (jj_3R_35()) return true;
+  private boolean jj_3_23() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
-  private boolean jj_3R_36() {
+  private boolean jj_3R_38() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_65()) {
-    jj_scanpos = xsp;
-    if (jj_3R_66()) {
-    jj_scanpos = xsp;
-    if (jj_3R_67()) {
-    jj_scanpos = xsp;
-    if (jj_3R_68()) {
-    jj_scanpos = xsp;
     if (jj_3R_69()) {
     jj_scanpos = xsp;
     if (jj_3R_70()) {
@@ -2662,7 +2952,15 @@ public class Traductor implements TraductorConstants {
     jj_scanpos = xsp;
     if (jj_3R_73()) {
     jj_scanpos = xsp;
-    if (jj_3R_74()) return true;
+    if (jj_3R_74()) {
+    jj_scanpos = xsp;
+    if (jj_3R_75()) {
+    jj_scanpos = xsp;
+    if (jj_3R_76()) {
+    jj_scanpos = xsp;
+    if (jj_3R_77()) {
+    jj_scanpos = xsp;
+    if (jj_3R_78()) return true;
     }
     }
     }
@@ -2673,36 +2971,36 @@ public class Traductor implements TraductorConstants {
     }
     }
     xsp = jj_scanpos;
-    if (jj_3R_75()) jj_scanpos = xsp;
-    if (jj_3R_51()) return true;
+    if (jj_3R_79()) jj_scanpos = xsp;
+    if (jj_3R_55()) return true;
     return false;
   }
 
-  private boolean jj_3_31() {
-    if (jj_3R_39()) return true;
+  private boolean jj_3_33() {
+    if (jj_3R_41()) return true;
     return false;
   }
 
-  private boolean jj_3R_104() {
+  private boolean jj_3R_120() {
     if (jj_scan_token(TRUE)) return true;
     return false;
   }
 
-  private boolean jj_3R_33() {
+  private boolean jj_3R_35() {
     if (jj_scan_token(RETURN)) return true;
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3_21()) jj_scanpos = xsp;
+    if (jj_3_23()) jj_scanpos = xsp;
     if (jj_scan_token(PUNTO_Y_COMA)) return true;
     return false;
   }
 
-  private boolean jj_3_26() {
-    if (jj_3R_35()) return true;
+  private boolean jj_3_28() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
-  private boolean jj_3_30() {
+  private boolean jj_3_32() {
     if (jj_scan_token(DOUBLE)) return true;
     if (jj_scan_token(PUNTO)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
@@ -2710,28 +3008,28 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_103() {
+  private boolean jj_3R_119() {
     if (jj_scan_token(CADENA)) return true;
     return false;
   }
 
-  private boolean jj_3R_32() {
+  private boolean jj_3R_34() {
     if (jj_scan_token(CONTINUE)) return true;
     if (jj_scan_token(PUNTO_Y_COMA)) return true;
     return false;
   }
 
-  private boolean jj_3R_79() {
-    if (jj_3R_92()) return true;
+  private boolean jj_3R_83() {
+    if (jj_3R_107()) return true;
     return false;
   }
 
-  private boolean jj_3R_63() {
-    if (jj_3R_88()) return true;
+  private boolean jj_3R_67() {
+    if (jj_3R_103()) return true;
     return false;
   }
 
-  private boolean jj_3_29() {
+  private boolean jj_3_31() {
     if (jj_scan_token(INT)) return true;
     if (jj_scan_token(PUNTO)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
@@ -2739,66 +3037,116 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_102() {
+  private boolean jj_3R_118() {
     if (jj_scan_token(DECIMAL)) return true;
     return false;
   }
 
-  private boolean jj_3R_31() {
+  private boolean jj_3R_33() {
     if (jj_scan_token(BREAK)) return true;
     if (jj_scan_token(PUNTO_Y_COMA)) return true;
     return false;
   }
 
-  private boolean jj_3R_34() {
+  private boolean jj_3R_36() {
     if (jj_scan_token(LLAVE_IZQ)) return true;
     Token xsp;
     while (true) {
       xsp = jj_scanpos;
-      if (jj_3R_63()) { jj_scanpos = xsp; break; }
+      if (jj_3R_67()) { jj_scanpos = xsp; break; }
     }
     if (jj_scan_token(LLAVE_DER)) return true;
     return false;
   }
 
-  private boolean jj_3R_39() {
+  private boolean jj_3R_41() {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_78() {
-    if (jj_3R_91()) return true;
+  private boolean jj_3R_100() {
+    if (jj_scan_token(BYTE)) return true;
     return false;
   }
 
-  private boolean jj_3R_51() {
+  private boolean jj_3R_82() {
+    if (jj_3R_106()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_99() {
+    if (jj_scan_token(SHORT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_98() {
+    if (jj_scan_token(LONG)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_97() {
+    if (jj_scan_token(FLOAT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_96() {
+    if (jj_scan_token(DOUBLE)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_95() {
+    if (jj_scan_token(CHAR)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_55() {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     return false;
   }
 
-  private boolean jj_3R_77() {
-    if (jj_3R_91()) return true;
+  private boolean jj_3R_94() {
+    if (jj_scan_token(STRING)) return true;
     return false;
   }
 
-  private boolean jj_3R_101() {
+  private boolean jj_3R_81() {
+    if (jj_3R_106()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_117() {
     if (jj_scan_token(NUMERO)) return true;
     return false;
   }
 
-  private boolean jj_3R_23() {
+  private boolean jj_3R_93() {
+    if (jj_scan_token(BOOLEAN)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_92() {
+    if (jj_scan_token(BOOL)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_25() {
     if (jj_scan_token(TRY)) return true;
-    if (jj_3R_34()) return true;
+    if (jj_3R_36()) return true;
     return false;
   }
 
-  private boolean jj_3_25() {
-    if (jj_3R_38()) return true;
+  private boolean jj_3R_91() {
+    if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  private boolean jj_3R_19() {
+  private boolean jj_3_27() {
+    if (jj_3R_40()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_21() {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PUNTO)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
@@ -2806,27 +3154,69 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_107() {
-    if (jj_scan_token(RESTA)) return true;
+  private boolean jj_3R_90() {
+    if (jj_scan_token(VOID)) return true;
     return false;
   }
 
-  private boolean jj_3R_97() {
+  private boolean jj_3R_43() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_107()) {
+    if (jj_3R_90()) {
     jj_scanpos = xsp;
-    if (jj_3_25()) return true;
+    if (jj_3R_91()) {
+    jj_scanpos = xsp;
+    if (jj_3R_92()) {
+    jj_scanpos = xsp;
+    if (jj_3R_93()) {
+    jj_scanpos = xsp;
+    if (jj_3R_94()) {
+    jj_scanpos = xsp;
+    if (jj_3R_95()) {
+    jj_scanpos = xsp;
+    if (jj_3R_96()) {
+    jj_scanpos = xsp;
+    if (jj_3R_97()) {
+    jj_scanpos = xsp;
+    if (jj_3R_98()) {
+    jj_scanpos = xsp;
+    if (jj_3R_99()) {
+    jj_scanpos = xsp;
+    if (jj_3R_100()) return true;
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
     }
     return false;
   }
 
-  private boolean jj_3R_76() {
-    if (jj_3R_90()) return true;
+  private boolean jj_3R_124() {
+    if (jj_scan_token(RESTA)) return true;
     return false;
   }
 
-  private boolean jj_3R_38() {
+  private boolean jj_3R_113() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_124()) {
+    jj_scanpos = xsp;
+    if (jj_3_27()) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_80() {
+    if (jj_3R_105()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_40() {
     Token xsp;
     xsp = jj_scanpos;
     jj_lookingAhead = true;
@@ -2835,11 +3225,11 @@ public class Traductor implements TraductorConstants {
         && getToken(3).image.equals("IndexOf")
         && getToken(4).kind == PARENTESIS_IZQ;
     jj_lookingAhead = false;
-    if (!jj_semLA || jj_3R_76()) {
+    if (!jj_semLA || jj_3R_80()) {
     jj_scanpos = xsp;
-    if (jj_3R_77()) {
+    if (jj_3R_81()) {
     jj_scanpos = xsp;
-    if (jj_3R_78()) {
+    if (jj_3R_82()) {
     jj_scanpos = xsp;
     jj_lookingAhead = true;
     jj_semLA = getToken(1).image.equals("Convert")
@@ -2849,21 +3239,21 @@ public class Traductor implements TraductorConstants {
             || getToken(3).image.equals("ToDouble")
         );
     jj_lookingAhead = false;
-    if (!jj_semLA || jj_3R_79()) {
+    if (!jj_semLA || jj_3R_83()) {
     jj_scanpos = xsp;
-    if (jj_3_31()) {
-    jj_scanpos = xsp;
-    if (jj_3R_80()) {
-    jj_scanpos = xsp;
-    if (jj_3R_81()) {
-    jj_scanpos = xsp;
-    if (jj_3R_82()) {
-    jj_scanpos = xsp;
-    if (jj_3R_83()) {
+    if (jj_3_33()) {
     jj_scanpos = xsp;
     if (jj_3R_84()) {
     jj_scanpos = xsp;
-    if (jj_3R_85()) return true;
+    if (jj_3R_85()) {
+    jj_scanpos = xsp;
+    if (jj_3R_86()) {
+    jj_scanpos = xsp;
+    if (jj_3R_87()) {
+    jj_scanpos = xsp;
+    if (jj_3R_88()) {
+    jj_scanpos = xsp;
+    if (jj_3R_89()) return true;
     }
     }
     }
@@ -2877,105 +3267,105 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_50() {
+  private boolean jj_3R_54() {
     if (jj_scan_token(CORCHETE_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_49() {
+  private boolean jj_3R_53() {
     if (jj_scan_token(BYTE)) return true;
     return false;
   }
 
-  private boolean jj_3R_48() {
+  private boolean jj_3R_52() {
     if (jj_scan_token(SHORT)) return true;
     return false;
   }
 
-  private boolean jj_3R_47() {
+  private boolean jj_3R_51() {
     if (jj_scan_token(LONG)) return true;
     return false;
   }
 
-  private boolean jj_3R_46() {
+  private boolean jj_3R_50() {
     if (jj_scan_token(FLOAT)) return true;
     return false;
   }
 
-  private boolean jj_3_27() {
-    if (jj_3R_35()) return true;
+  private boolean jj_3_29() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
-  private boolean jj_3R_45() {
+  private boolean jj_3R_49() {
     if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
-  private boolean jj_3R_44() {
+  private boolean jj_3R_48() {
     if (jj_scan_token(CHAR)) return true;
     return false;
   }
 
-  private boolean jj_3R_43() {
+  private boolean jj_3R_47() {
     if (jj_scan_token(STRING)) return true;
     return false;
   }
 
-  private boolean jj_3R_42() {
+  private boolean jj_3R_46() {
     if (jj_scan_token(BOOLEAN)) return true;
     return false;
   }
 
-  private boolean jj_3R_41() {
+  private boolean jj_3R_45() {
     if (jj_scan_token(BOOL)) return true;
     return false;
   }
 
-  private boolean jj_3R_40() {
+  private boolean jj_3R_44() {
     if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  private boolean jj_3R_22() {
+  private boolean jj_3R_24() {
     if (jj_scan_token(IF)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_95() {
+  private boolean jj_3R_110() {
     if (jj_scan_token(LLAVE_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_29() {
+  private boolean jj_3R_31() {
     if (jj_scan_token(SWITCH)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3_28() {
-    if (jj_3R_35()) return true;
+  private boolean jj_3_30() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
-  private boolean jj_3R_87() {
+  private boolean jj_3R_102() {
     if (jj_scan_token(PRINTLN)) return true;
     return false;
   }
 
-  private boolean jj_3R_62() {
+  private boolean jj_3R_66() {
     if (jj_scan_token(CONSOLE)) return true;
     if (jj_scan_token(PUNTO)) return true;
     return false;
   }
 
-  private boolean jj_3R_89() {
-    if (jj_3R_97()) return true;
+  private boolean jj_3R_104() {
+    if (jj_3R_113()) return true;
     return false;
   }
 
-  private boolean jj_3R_86() {
+  private boolean jj_3R_101() {
     if (jj_scan_token(PRINT)) return true;
     return false;
   }
@@ -2983,14 +3373,16 @@ public class Traductor implements TraductorConstants {
   private boolean jj_3R_17() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_40()) {
+    if (jj_scan_token(44)) {
     jj_scanpos = xsp;
-    if (jj_3R_41()) {
-    jj_scanpos = xsp;
-    if (jj_3R_42()) {
-    jj_scanpos = xsp;
-    if (jj_3R_43()) {
-    jj_scanpos = xsp;
+    if (jj_scan_token(45)) return true;
+    }
+    return false;
+  }
+
+  private boolean jj_3R_19() {
+    Token xsp;
+    xsp = jj_scanpos;
     if (jj_3R_44()) {
     jj_scanpos = xsp;
     if (jj_3R_45()) {
@@ -3001,7 +3393,15 @@ public class Traductor implements TraductorConstants {
     jj_scanpos = xsp;
     if (jj_3R_48()) {
     jj_scanpos = xsp;
-    if (jj_3R_49()) return true;
+    if (jj_3R_49()) {
+    jj_scanpos = xsp;
+    if (jj_3R_50()) {
+    jj_scanpos = xsp;
+    if (jj_3R_51()) {
+    jj_scanpos = xsp;
+    if (jj_3R_52()) {
+    jj_scanpos = xsp;
+    if (jj_3R_53()) return true;
     }
     }
     }
@@ -3012,132 +3412,50 @@ public class Traductor implements TraductorConstants {
     }
     }
     xsp = jj_scanpos;
-    if (jj_3R_50()) jj_scanpos = xsp;
-    if (jj_3R_51()) return true;
+    if (jj_3R_54()) jj_scanpos = xsp;
+    if (jj_3R_55()) return true;
     return false;
   }
 
-  private boolean jj_3R_93() {
+  private boolean jj_3R_108() {
     if (jj_scan_token(NEW)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_60() {
-    if (jj_scan_token(DECREMENTO)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_61() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_86()) {
-    jj_scanpos = xsp;
-    if (jj_3R_87()) return true;
-    }
-    if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_59() {
-    if (jj_scan_token(INCREMENTO)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_30() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_61()) {
-    jj_scanpos = xsp;
-    if (jj_3R_62()) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_100() {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_96() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_100()) {
-    jj_scanpos = xsp;
-    if (jj_3R_101()) {
-    jj_scanpos = xsp;
-    if (jj_3R_102()) {
-    jj_scanpos = xsp;
-    if (jj_3R_103()) {
-    jj_scanpos = xsp;
-    if (jj_3R_104()) {
-    jj_scanpos = xsp;
-    if (jj_3R_105()) {
-    jj_scanpos = xsp;
-    if (jj_3R_106()) return true;
-    }
-    }
-    }
-    }
-    }
-    }
     return false;
   }
 
   private boolean jj_3R_64() {
-    if (jj_3R_89()) return true;
+    if (jj_scan_token(DECREMENTO)) return true;
     return false;
   }
 
-  private boolean jj_3R_28() {
-    if (jj_scan_token(FOREACH)) return true;
+  private boolean jj_3_17() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_21() {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
+  private boolean jj_3R_65() {
     Token xsp;
     xsp = jj_scanpos;
-    if (jj_3R_59()) {
+    if (jj_3R_101()) {
     jj_scanpos = xsp;
-    if (jj_3R_60()) return true;
+    if (jj_3R_102()) return true;
     }
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
-  private boolean jj_3R_35() {
-    if (jj_3R_64()) return true;
+  private boolean jj_3R_63() {
+    if (jj_scan_token(INCREMENTO)) return true;
     return false;
   }
 
-  private boolean jj_3R_94() {
-    if (jj_scan_token(NEW)) return true;
+  private boolean jj_3_21() {
+    if (jj_3R_36()) return true;
     return false;
   }
 
-  private boolean jj_3R_16() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_scan_token(42)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(43)) return true;
-    }
-    return false;
-  }
-
-  private boolean jj_3R_27() {
-    if (jj_scan_token(DO)) return true;
-    if (jj_3R_34()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_58() {
-    if (jj_scan_token(MOD_ASIGNACION)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_57() {
-    if (jj_scan_token(DIV_ASIGNACION)) return true;
+  private boolean jj_3_20() {
+    if (jj_3R_35()) return true;
     return false;
   }
 
@@ -3146,18 +3464,79 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_32() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_65()) {
+    jj_scanpos = xsp;
+    if (jj_3R_66()) return true;
+    }
+    return false;
+  }
+
   private boolean jj_3_18() {
     if (jj_3R_33()) return true;
     return false;
   }
 
-  private boolean jj_3_17() {
-    if (jj_3R_32()) return true;
+  private boolean jj_3R_116() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_112() {
+    if (jj_3R_123()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_111() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_116()) {
+    jj_scanpos = xsp;
+    if (jj_3R_117()) {
+    jj_scanpos = xsp;
+    if (jj_3R_118()) {
+    jj_scanpos = xsp;
+    if (jj_3R_119()) {
+    jj_scanpos = xsp;
+    if (jj_3R_120()) {
+    jj_scanpos = xsp;
+    if (jj_3R_121()) {
+    jj_scanpos = xsp;
+    if (jj_3R_122()) return true;
+    }
+    }
+    }
+    }
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_68() {
+    if (jj_3R_104()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_30() {
+    if (jj_scan_token(FOREACH)) return true;
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
   private boolean jj_3_16() {
+    if (jj_3R_32()) return true;
+    return false;
+  }
+
+  private boolean jj_3_15() {
     if (jj_3R_31()) return true;
+    return false;
+  }
+
+  private boolean jj_3_14() {
+    if (jj_3R_30()) return true;
     return false;
   }
 
@@ -3175,7 +3554,7 @@ public class Traductor implements TraductorConstants {
   private boolean jj_lookingAhead = false;
   private boolean jj_semLA;
   private int jj_gen;
-  final private int[] jj_la1 = new int[52];
+  final private int[] jj_la1 = new int[58];
   static private int[] jj_la1_0;
   static private int[] jj_la1_1;
   static private int[] jj_la1_2;
@@ -3185,15 +3564,15 @@ public class Traductor implements TraductorConstants {
       jj_la1_init_2();
    }
    private static void jj_la1_init_0() {
-      jj_la1_0 = new int[] {0xa383fca0,0x0,0x80000000,0x0,0x0,0x0,0x80000000,0x0,0x0,0x0,0x0,0x0,0x40,0x100,0x200,0x0,0x0,0x80000000,0x40000,0x80000,0xa383fca0,0xa383fca0,0x0,0x0,0x0,0x1800000,0x18000000,0x1c000000,0x3800000,0xa383fca0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000000,0x80000000,0x0,0x0,0x0,0x2000000,0x700000,0x0,0x0,0x0,0x0,0x0,0x700000,};
+      jj_la1_0 = new int[] {0xa383fca0,0x0,0x80000000,0x80000000,0x0,0x0,0x0,0x80000000,0x80000000,0x0,0x0,0x0,0x80000000,0x0,0x0,0x0,0x0,0x0,0x40,0x100,0x200,0x0,0x0,0x80000000,0x40000,0x80000,0xa383fca0,0xa383fca0,0x0,0x0,0x0,0x1800000,0x18000000,0x1c000000,0x3800000,0xa383fca0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x80000000,0x80000000,0x0,0x0,0x0,0x2000000,0x700000,0x0,0x0,0x0,0x0,0x0,0x700000,};
    }
    private static void jj_la1_init_1() {
-      jj_la1_1 = new int[] {0xffe,0xc00,0x3fe,0x0,0x0,0x10000000,0x3fe,0x0,0x0,0x0,0x107c0000,0x60000000,0x0,0x0,0x0,0x0,0x0,0xe,0x0,0x0,0xffe,0xffe,0x0,0x107c0000,0x707c0000,0x0,0x0,0x0,0x0,0xffe,0x0,0x80000000,0x0,0x3f000,0x3f000,0x1800000,0xe000000,0x1000000,0x0,0x20,0x3fc,0x0,0x0,0x0,0x0,0x1,0x1800000,0xe000000,0xf800000,0x0,0x0,0x0,};
+      jj_la1_1 = new int[] {0x3ffe,0x3000,0x7fe,0x3fe,0x0,0x800,0x0,0x3fe,0x3fe,0x0,0x0,0x40000000,0x3fe,0x0,0x0,0x0,0x41f00000,0x80000000,0x0,0x0,0x0,0x0,0x0,0xe,0x0,0x0,0x3ffe,0x3ffe,0x0,0x41f00000,0xc1f00000,0x0,0x0,0x0,0x0,0x3ffe,0x0,0x0,0x0,0xfc000,0xfc000,0x6000000,0x38000000,0x4000000,0x0,0x20,0x3fc,0x0,0x0,0x0,0x0,0x1,0x6000000,0x38000000,0x3e000000,0x0,0x0,0x0,};
    }
    private static void jj_la1_init_2() {
-      jj_la1_2 = new int[] {0x8010,0x0,0x0,0x40,0x400,0x0,0x0,0x40,0x400,0x40,0x0,0x0,0x0,0x0,0x0,0x8000,0x4,0x0,0x0,0x0,0x8010,0x8010,0x8000,0x0,0x0,0x0,0x0,0x0,0x0,0x8010,0x1,0x0,0x6,0x0,0x0,0x0,0x0,0x0,0x400,0x0,0x0,0x400,0x400,0x800,0x0,0xf014,0x0,0x0,0x0,0x840,0x840,0xf000,};
+      jj_la1_2 = new int[] {0x20040,0x0,0x0,0x0,0x100,0x0,0x1000,0x0,0x0,0x100,0x1000,0x0,0x0,0x100,0x1000,0x100,0x0,0x1,0x0,0x0,0x0,0x20000,0x10,0x0,0x0,0x0,0x20040,0x20040,0x20000,0x0,0x1,0x0,0x0,0x0,0x0,0x20040,0x4,0x2,0x18,0x0,0x0,0x0,0x0,0x0,0x1000,0x0,0x0,0x1000,0x1000,0x2000,0x0,0x3c050,0x0,0x0,0x0,0x2100,0x2100,0x3c000,};
    }
-  final private JJCalls[] jj_2_rtns = new JJCalls[32];
+  final private JJCalls[] jj_2_rtns = new JJCalls[34];
   private boolean jj_rescan = false;
   private int jj_gc = 0;
 
@@ -3208,7 +3587,7 @@ public class Traductor implements TraductorConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 52; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 58; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -3223,7 +3602,7 @@ public class Traductor implements TraductorConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 52; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 58; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -3234,7 +3613,7 @@ public class Traductor implements TraductorConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 52; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 58; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -3245,7 +3624,7 @@ public class Traductor implements TraductorConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 52; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 58; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -3255,7 +3634,7 @@ public class Traductor implements TraductorConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 52; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 58; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -3265,7 +3644,7 @@ public class Traductor implements TraductorConstants {
     token = new Token();
     jj_ntk = -1;
     jj_gen = 0;
-    for (int i = 0; i < 52; i++) jj_la1[i] = -1;
+    for (int i = 0; i < 58; i++) jj_la1[i] = -1;
     for (int i = 0; i < jj_2_rtns.length; i++) jj_2_rtns[i] = new JJCalls();
   }
 
@@ -3380,12 +3759,12 @@ public class Traductor implements TraductorConstants {
   /** Generate ParseException. */
   public ParseException generateParseException() {
     jj_expentries.clear();
-    boolean[] la1tokens = new boolean[80];
+    boolean[] la1tokens = new boolean[82];
     if (jj_kind >= 0) {
       la1tokens[jj_kind] = true;
       jj_kind = -1;
     }
-    for (int i = 0; i < 52; i++) {
+    for (int i = 0; i < 58; i++) {
       if (jj_la1[i] == jj_gen) {
         for (int j = 0; j < 32; j++) {
           if ((jj_la1_0[i] & (1<<j)) != 0) {
@@ -3400,7 +3779,7 @@ public class Traductor implements TraductorConstants {
         }
       }
     }
-    for (int i = 0; i < 80; i++) {
+    for (int i = 0; i < 82; i++) {
       if (la1tokens[i]) {
         jj_expentry = new int[1];
         jj_expentry[0] = i;
@@ -3427,7 +3806,7 @@ public class Traductor implements TraductorConstants {
 
   private void jj_rescan_token() {
     jj_rescan = true;
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 34; i++) {
     try {
       JJCalls p = jj_2_rtns[i];
       do {
@@ -3466,6 +3845,8 @@ public class Traductor implements TraductorConstants {
             case 29: jj_3_30(); break;
             case 30: jj_3_31(); break;
             case 31: jj_3_32(); break;
+            case 32: jj_3_33(); break;
+            case 33: jj_3_34(); break;
           }
         }
         p = p.next;
