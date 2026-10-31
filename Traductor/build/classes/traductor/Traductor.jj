@@ -435,8 +435,6 @@ Nodo declaracionVariableElemento(String tipoDato) :
         mostrarToken(t);
         n.valor = t.image;
         n.atributo("tipoDato", tipoDato);
-
-        Semantico.declararVariable(t.image, tipoDato);
     }
 
     [
@@ -604,11 +602,9 @@ Nodo condicion() :
     { return n; }
 }
 
-
  // ------------------------------------------------------
  // EXCEPCIONES: TRY - CATCH - FINALLY
  // ------------------------------------------------------
-
 Nodo manejoExcepciones() :
 {
     Token t;

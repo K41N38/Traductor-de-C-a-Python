@@ -493,8 +493,6 @@ public class Traductor implements TraductorConstants {
         mostrarToken(t);
         n.valor = t.image;
         n.atributo("tipoDato", tipoDato);
-
-        Semantico.declararVariable(t.image, tipoDato);
     switch ((jj_ntk==-1)?jj_ntk():jj_ntk) {
     case ASIGNACION:
       t = jj_consume_token(ASIGNACION);
@@ -2507,8 +2505,59 @@ public class Traductor implements TraductorConstants {
     finally { jj_save(33, xla); }
   }
 
+  private boolean jj_3R_116() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_111() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_116()) {
+    jj_scanpos = xsp;
+    if (jj_3R_117()) {
+    jj_scanpos = xsp;
+    if (jj_3R_118()) {
+    jj_scanpos = xsp;
+    if (jj_3R_119()) {
+    jj_scanpos = xsp;
+    if (jj_3R_120()) {
+    jj_scanpos = xsp;
+    if (jj_3R_121()) {
+    jj_scanpos = xsp;
+    if (jj_3R_122()) return true;
+    }
+    }
+    }
+    }
+    }
+    }
+    return false;
+  }
+
+  private boolean jj_3R_68() {
+    if (jj_3R_104()) return true;
+    return false;
+  }
+
   private boolean jj_3_13() {
     if (jj_3R_29()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_30() {
+    if (jj_scan_token(FOREACH)) return true;
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
+    return false;
+  }
+
+  private boolean jj_3_12() {
+    if (jj_3R_28()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_123() {
+    if (jj_3R_41()) return true;
     return false;
   }
 
@@ -2523,23 +2572,8 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3_12() {
-    if (jj_3R_28()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_123() {
-    if (jj_3R_41()) return true;
-    return false;
-  }
-
   private boolean jj_3_11() {
     if (jj_3R_27()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_37() {
-    if (jj_3R_68()) return true;
     return false;
   }
 
@@ -2550,11 +2584,6 @@ public class Traductor implements TraductorConstants {
 
   private boolean jj_3_9() {
     if (jj_3R_25()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_109() {
-    if (jj_scan_token(NEW)) return true;
     return false;
   }
 
@@ -2573,8 +2602,18 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_37() {
+    if (jj_3R_68()) return true;
+    return false;
+  }
+
   private boolean jj_3_5() {
     if (jj_3R_21()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_109() {
+    if (jj_scan_token(NEW)) return true;
     return false;
   }
 
@@ -2601,11 +2640,6 @@ public class Traductor implements TraductorConstants {
   private boolean jj_3R_29() {
     if (jj_scan_token(DO)) return true;
     if (jj_3R_36()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_62() {
-    if (jj_scan_token(MOD_ASIGNACION)) return true;
     return false;
   }
 
@@ -2676,19 +2710,24 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_62() {
+    if (jj_scan_token(MOD_ASIGNACION)) return true;
+    return false;
+  }
+
   private boolean jj_3R_61() {
     if (jj_scan_token(DIV_ASIGNACION)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_60() {
+    if (jj_scan_token(MULT_ASIGNACION)) return true;
     return false;
   }
 
   private boolean jj_3R_27() {
     if (jj_scan_token(WHILE)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_60() {
-    if (jj_scan_token(MULT_ASIGNACION)) return true;
     return false;
   }
 
@@ -2712,6 +2751,11 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_57() {
+    if (jj_scan_token(ASIGNACION)) return true;
+    return false;
+  }
+
   private boolean jj_3R_20() {
     if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PUNTO)) return true;
@@ -2719,11 +2763,6 @@ public class Traductor implements TraductorConstants {
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(COMA)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_57() {
-    if (jj_scan_token(ASIGNACION)) return true;
     return false;
   }
 
@@ -2803,13 +2842,23 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_42() {
+    if (jj_scan_token(STATIC)) return true;
+    return false;
+  }
+
   private boolean jj_3R_86() {
     if (jj_3R_109()) return true;
     return false;
   }
 
-  private boolean jj_3R_42() {
-    if (jj_scan_token(STATIC)) return true;
+  private boolean jj_3R_18() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_3R_42()) jj_scanpos = xsp;
+    if (jj_3R_43()) return true;
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
@@ -2825,16 +2874,6 @@ public class Traductor implements TraductorConstants {
 
   private boolean jj_3R_85() {
     if (jj_3R_108()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_18() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_42()) jj_scanpos = xsp;
-    if (jj_3R_43()) return true;
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
@@ -2858,6 +2897,16 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_77() {
+    if (jj_scan_token(SHORT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_76() {
+    if (jj_scan_token(LONG)) return true;
+    return false;
+  }
+
   private boolean jj_3R_106() {
     Token xsp;
     xsp = jj_scanpos;
@@ -2868,8 +2917,8 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_77() {
-    if (jj_scan_token(SHORT)) return true;
+  private boolean jj_3R_75() {
+    if (jj_scan_token(FLOAT)) return true;
     return false;
   }
 
@@ -2878,24 +2927,14 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_76() {
-    if (jj_scan_token(LONG)) return true;
+  private boolean jj_3R_74() {
+    if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
   private boolean jj_3R_28() {
     if (jj_scan_token(FOR)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_75() {
-    if (jj_scan_token(FLOAT)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_74() {
-    if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
@@ -2934,11 +2973,6 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3_23() {
-    if (jj_3R_37()) return true;
-    return false;
-  }
-
   private boolean jj_3R_38() {
     Token xsp;
     xsp = jj_scanpos;
@@ -2973,6 +3007,11 @@ public class Traductor implements TraductorConstants {
     xsp = jj_scanpos;
     if (jj_3R_79()) jj_scanpos = xsp;
     if (jj_3R_55()) return true;
+    return false;
+  }
+
+  private boolean jj_3_23() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
@@ -3029,6 +3068,11 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_100() {
+    if (jj_scan_token(BYTE)) return true;
+    return false;
+  }
+
   private boolean jj_3_31() {
     if (jj_scan_token(INT)) return true;
     if (jj_scan_token(PUNTO)) return true;
@@ -3037,8 +3081,23 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
+  private boolean jj_3R_99() {
+    if (jj_scan_token(SHORT)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_98() {
+    if (jj_scan_token(LONG)) return true;
+    return false;
+  }
+
   private boolean jj_3R_118() {
     if (jj_scan_token(DECIMAL)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_97() {
+    if (jj_scan_token(FLOAT)) return true;
     return false;
   }
 
@@ -3065,33 +3124,13 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_100() {
-    if (jj_scan_token(BYTE)) return true;
+  private boolean jj_3R_96() {
+    if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
   private boolean jj_3R_82() {
     if (jj_3R_106()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_99() {
-    if (jj_scan_token(SHORT)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_98() {
-    if (jj_scan_token(LONG)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_97() {
-    if (jj_scan_token(FLOAT)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_96() {
-    if (jj_scan_token(DOUBLE)) return true;
     return false;
   }
 
@@ -3110,16 +3149,6 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_81() {
-    if (jj_3R_106()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_117() {
-    if (jj_scan_token(NUMERO)) return true;
-    return false;
-  }
-
   private boolean jj_3R_93() {
     if (jj_scan_token(BOOLEAN)) return true;
     return false;
@@ -3130,14 +3159,29 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_25() {
-    if (jj_scan_token(TRY)) return true;
-    if (jj_3R_36()) return true;
+  private boolean jj_3R_91() {
+    if (jj_scan_token(INT)) return true;
     return false;
   }
 
-  private boolean jj_3R_91() {
-    if (jj_scan_token(INT)) return true;
+  private boolean jj_3R_90() {
+    if (jj_scan_token(VOID)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_81() {
+    if (jj_3R_106()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_117() {
+    if (jj_scan_token(NUMERO)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_25() {
+    if (jj_scan_token(TRY)) return true;
+    if (jj_3R_36()) return true;
     return false;
   }
 
@@ -3151,11 +3195,6 @@ public class Traductor implements TraductorConstants {
     if (jj_scan_token(PUNTO)) return true;
     if (jj_scan_token(IDENTIFICADOR)) return true;
     if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_90() {
-    if (jj_scan_token(VOID)) return true;
     return false;
   }
 
@@ -3292,11 +3331,6 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3_29() {
-    if (jj_3R_37()) return true;
-    return false;
-  }
-
   private boolean jj_3R_49() {
     if (jj_scan_token(DOUBLE)) return true;
     return false;
@@ -3314,6 +3348,11 @@ public class Traductor implements TraductorConstants {
 
   private boolean jj_3R_46() {
     if (jj_scan_token(BOOLEAN)) return true;
+    return false;
+  }
+
+  private boolean jj_3_29() {
+    if (jj_3R_37()) return true;
     return false;
   }
 
@@ -3335,6 +3374,16 @@ public class Traductor implements TraductorConstants {
 
   private boolean jj_3R_110() {
     if (jj_scan_token(LLAVE_IZQ)) return true;
+    return false;
+  }
+
+  private boolean jj_3R_17() {
+    Token xsp;
+    xsp = jj_scanpos;
+    if (jj_scan_token(44)) {
+    jj_scanpos = xsp;
+    if (jj_scan_token(45)) return true;
+    }
     return false;
   }
 
@@ -3367,16 +3416,6 @@ public class Traductor implements TraductorConstants {
 
   private boolean jj_3R_101() {
     if (jj_scan_token(PRINT)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_17() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_scan_token(44)) {
-    jj_scanpos = xsp;
-    if (jj_scan_token(45)) return true;
-    }
     return false;
   }
 
@@ -3417,8 +3456,9 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_108() {
-    if (jj_scan_token(NEW)) return true;
+  private boolean jj_3_17() {
+    if (jj_scan_token(IDENTIFICADOR)) return true;
+    if (jj_scan_token(PARENTESIS_IZQ)) return true;
     return false;
   }
 
@@ -3427,9 +3467,13 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3_17() {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    if (jj_scan_token(PARENTESIS_IZQ)) return true;
+  private boolean jj_3R_108() {
+    if (jj_scan_token(NEW)) return true;
+    return false;
+  }
+
+  private boolean jj_3_21() {
+    if (jj_3R_36()) return true;
     return false;
   }
 
@@ -3444,23 +3488,33 @@ public class Traductor implements TraductorConstants {
     return false;
   }
 
-  private boolean jj_3R_63() {
-    if (jj_scan_token(INCREMENTO)) return true;
-    return false;
-  }
-
-  private boolean jj_3_21() {
-    if (jj_3R_36()) return true;
-    return false;
-  }
-
   private boolean jj_3_20() {
     if (jj_3R_35()) return true;
     return false;
   }
 
+  private boolean jj_3R_63() {
+    if (jj_scan_token(INCREMENTO)) return true;
+    return false;
+  }
+
   private boolean jj_3_19() {
     if (jj_3R_34()) return true;
+    return false;
+  }
+
+  private boolean jj_3_18() {
+    if (jj_3R_33()) return true;
+    return false;
+  }
+
+  private boolean jj_3R_112() {
+    if (jj_3R_123()) return true;
+    return false;
+  }
+
+  private boolean jj_3_16() {
+    if (jj_3R_32()) return true;
     return false;
   }
 
@@ -3471,62 +3525,6 @@ public class Traductor implements TraductorConstants {
     jj_scanpos = xsp;
     if (jj_3R_66()) return true;
     }
-    return false;
-  }
-
-  private boolean jj_3_18() {
-    if (jj_3R_33()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_116() {
-    if (jj_scan_token(IDENTIFICADOR)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_112() {
-    if (jj_3R_123()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_111() {
-    Token xsp;
-    xsp = jj_scanpos;
-    if (jj_3R_116()) {
-    jj_scanpos = xsp;
-    if (jj_3R_117()) {
-    jj_scanpos = xsp;
-    if (jj_3R_118()) {
-    jj_scanpos = xsp;
-    if (jj_3R_119()) {
-    jj_scanpos = xsp;
-    if (jj_3R_120()) {
-    jj_scanpos = xsp;
-    if (jj_3R_121()) {
-    jj_scanpos = xsp;
-    if (jj_3R_122()) return true;
-    }
-    }
-    }
-    }
-    }
-    }
-    return false;
-  }
-
-  private boolean jj_3R_68() {
-    if (jj_3R_104()) return true;
-    return false;
-  }
-
-  private boolean jj_3R_30() {
-    if (jj_scan_token(FOREACH)) return true;
-    if (jj_scan_token(PARENTESIS_IZQ)) return true;
-    return false;
-  }
-
-  private boolean jj_3_16() {
-    if (jj_3R_32()) return true;
     return false;
   }
 

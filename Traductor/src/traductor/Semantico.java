@@ -5,10 +5,24 @@ public class Semantico {
 
     private static List<String> errores = new ArrayList<>();
 
-    private static Map<String, String> tablaVariables = new HashMap<>();
+    private static Map<String, String> tablaVariables = new LinkedHashMap<>();
 
     // Información de las funciones declaradas en el programa.
     private static Map<String, FuncionInfo> tablaFunciones = new LinkedHashMap<>();
+
+    // Ámbitos independientes para las variables de cada función.
+    private static Map<String, AmbitoFuncion> tablaAmbitosFunciones =
+            new LinkedHashMap<>();
+
+    // Representa las variables y parámetros de una función.
+    private static class AmbitoFuncion {
+        String nombreFuncion;
+        Map<String, String> variables = new LinkedHashMap<>();
+
+        AmbitoFuncion(String nombreFuncion) {
+            this.nombreFuncion = nombreFuncion;
+        }
+    }
 
     // Información de una función.
     private static class FuncionInfo {
@@ -27,6 +41,7 @@ public class Semantico {
         errores.clear();
         tablaVariables.clear();
         tablaFunciones.clear();
+        tablaAmbitosFunciones.clear();
     }
     
     private static void registrarFunciones(Nodo nodo) {
@@ -74,8 +89,181 @@ public class Semantico {
         }
     }
 
-    private static void validarLlamadasFunciones(Nodo nodo) {
+    /**
+     * Construye las tablas de variables globales y locales
+     * recorriendo el árbol de sintaxis abstracta.
+     */
+    private static void registrarAmbitos(Nodo raiz) {
+        tablaVariables.clear();
+        tablaAmbitosFunciones.clear();
+
+        if (raiz == null) {
+            return;
+        }
+
+        registrarVariablesGlobales(raiz);
+        registrarVariablesFunciones(raiz);
+    }
+
+    /**
+     * Registra las variables que se encuentran fuera de funciones.
+     */
+    private static void registrarVariablesGlobales(Nodo nodo) {
         if (nodo == null) {
+            return;
+        }
+
+        // No se deben registrar aquí las variables de una función.
+        if ("funcion".equals(nodo.tipo)) {
+            return;
+        }
+
+        registrarDeclaracionEnAmbito(nodo, tablaVariables, "global");
+
+        for (Nodo hijo : nodo.hijos) {
+            registrarVariablesGlobales(hijo);
+        }
+    }
+
+    /**
+     * Registra los parámetros y las variables locales de cada función.
+     */
+    private static void registrarVariablesFunciones(Nodo nodo) {
+        if (nodo == null) {
+            return;
+        }
+
+        if ("funcion".equals(nodo.tipo)) {
+            String nombre = nodo.valor;
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return;
+            }
+
+            AmbitoFuncion ambito = new AmbitoFuncion(nombre);
+
+            // Los hijos, excepto el último, son los parámetros.
+            int cantidadParametros = Math.max(0, nodo.hijos.size() - 1);
+
+            for (int i = 0; i < cantidadParametros; i++) {
+                Nodo parametro = nodo.hijo(i);
+
+                if (!"parametro".equals(parametro.tipo)) {
+                    continue;
+                }
+
+                String nombreParametro = parametro.valor;
+                String tipoParametro = normalizarTipo(
+                    parametro.atributoPorDefecto("tipoDato", "desconocido")
+                );
+
+                if (ambito.variables.containsKey(nombreParametro)) {
+                    error(
+                        "El parámetro '" + nombreParametro
+                        + "' está declarado más de una vez en la función '"
+                        + nombre + "'."
+                    );
+                } else {
+                    ambito.variables.put(nombreParametro, tipoParametro);
+                }
+            }
+
+            // El último hijo es el cuerpo de la función.
+            if (!nodo.hijos.isEmpty()) {
+                Nodo cuerpo = nodo.hijo(nodo.hijos.size() - 1);
+                registrarVariablesLocales(cuerpo, ambito);
+            }
+
+            tablaAmbitosFunciones.put(nombre, ambito);
+
+            // No se recorren nuevamente los hijos de esta función.
+            return;
+        }
+
+        for (Nodo hijo : nodo.hijos) {
+            registrarVariablesFunciones(hijo);
+        }
+    }
+
+    /**
+     * Recorre el cuerpo de una función y registra sus variables locales.
+     */
+    private static void registrarVariablesLocales(
+            Nodo nodo, AmbitoFuncion ambito) {
+
+        if (nodo == null) {
+            return;
+        }
+
+        // No se mezclan ámbitos de funciones diferentes.
+        if ("funcion".equals(nodo.tipo)) {
+            return;
+        }
+
+        registrarDeclaracionEnAmbito(
+            nodo,
+            ambito.variables,
+            "la función '" + ambito.nombreFuncion + "'"
+        );
+
+        for (Nodo hijo : nodo.hijos) {
+            registrarVariablesLocales(hijo, ambito);
+        }
+    }
+
+    /**
+     * Registra una declaración individual o una declaración múltiple.
+     */
+    private static void registrarDeclaracionEnAmbito(
+            Nodo nodo,
+            Map<String, String> variables,
+            String descripcionAmbito) {
+
+        if (nodo == null) {
+            return;
+        }
+
+        if ("declaracionVariable".equals(nodo.tipo)) {
+            String nombre = nodo.valor;
+            String tipo = normalizarTipo(
+                nodo.atributoPorDefecto("tipoDato", "desconocido")
+            );
+
+            if (nombre == null || nombre.trim().isEmpty()) {
+                return;
+            }
+
+            if (variables.containsKey(nombre)) {
+                error(
+                    "La variable '" + nombre
+                    + "' ya fue declarada en " + descripcionAmbito + "."
+                );
+            } else {
+                variables.put(nombre, tipo);
+            }
+        }
+    }
+    
+    /**
+     * Valida las llamadas a funciones considerando el ámbito
+     * desde el que se proporcionan los argumentos.
+     */
+    private static void validarLlamadasFunciones(
+            Nodo nodo, String nombreFuncion) {
+
+        if (nodo == null) {
+            return;
+        }
+
+        // Actualiza el contexto cuando se entra a una función.
+        if ("funcion".equals(nodo.tipo)) {
+            nombreFuncion = nodo.valor;
+
+            // Se recorren los hijos con el ámbito de esta función.
+            for (Nodo hijo : nodo.hijos) {
+                validarLlamadasFunciones(hijo, nombreFuncion);
+            }
+
             return;
         }
 
@@ -84,42 +272,43 @@ public class Semantico {
             FuncionInfo funcion = tablaFunciones.get(nombre);
 
             if (funcion == null) {
-                errores.add(
+                error(
                     "La función '" + nombre
                     + "' se utiliza, pero no ha sido declarada."
                 );
+
             } else {
                 int esperados = funcion.tiposParametros.size();
                 int recibidos = nodo.hijos.size();
 
                 if (esperados != recibidos) {
-                    errores.add(
+                    error(
                         "La función '" + nombre + "' requiere "
                         + esperados + " parámetro(s), pero recibió "
                         + recibidos + "."
                     );
                 }
 
-                // Comprobar los tipos de los argumentos disponibles.
                 int limite = Math.min(esperados, recibidos);
 
                 for (int i = 0; i < limite; i++) {
+
                     String tipoEsperado = normalizarTipo(
                         funcion.tiposParametros.get(i)
                     );
 
                     String tipoRecibido = normalizarTipo(
-                        inferirTipo(nodo.hijo(i))
+                        inferirTipo(nodo.hijo(i), nombreFuncion)
                     );
 
-                    // Si no se puede determinar el tipo, se deja pendiente.
-                    if (tipoRecibido == null
-                            || "desconocido".equalsIgnoreCase(tipoRecibido)) {
+                    if ("desconocido".equals(tipoRecibido)) {
                         continue;
                     }
 
-                    if (!tiposCompatibles(tipoEsperado, tipoRecibido)) {
-                        errores.add(
+                    if (!tiposCompatibles(
+                            tipoEsperado, tipoRecibido)) {
+
+                        error(
                             "El parámetro " + (i + 1)
                             + " de la función '" + nombre
                             + "' debe ser de tipo '" + tipoEsperado
@@ -131,72 +320,8 @@ public class Semantico {
         }
 
         for (Nodo hijo : nodo.hijos) {
-            validarLlamadasFunciones(hijo);
+            validarLlamadasFunciones(hijo, nombreFuncion);
         }
-    }
-    
-    private static void validarLlamadasFunciones(Nodo nodo, boolean dentroDeFuncion) {
-        if (nodo == null) {
-            return;
-        }
-
-        boolean contextoFuncion = dentroDeFuncion || "funcion".equals(nodo.tipo);
-
-        if ("llamadaFuncion".equals(nodo.tipo)) {
-            String nombre = nodo.valor;
-            FuncionInfo funcion = tablaFunciones.get(nombre);
-
-            if (funcion == null) {
-                errores.add("La función '" + nombre + "' se utiliza, pero no ha sido declarada.");
-            } else {
-                int esperados = funcion.tiposParametros.size();
-                int recibidos = nodo.hijos.size();
-
-                if (esperados != recibidos) {
-                    errores.add(
-                        "La función '" + nombre + "' requiere " + esperados
-                        + " parámetro(s), pero recibió " + recibidos + "."
-                    );
-                }
-
-                int limite = Math.min(esperados, recibidos);
-
-                for (int i = 0; i < limite; i++) {
-                    String tipoEsperado = funcion.tiposParametros.get(i);
-                    String tipoRecibido = normalizarTipo(inferirTipo(nodo.hijos.get(i)));
-
-                    if (!tiposCompatibles(tipoEsperado, tipoRecibido)) {
-                        errores.add(
-                            "El parámetro " + (i + 1) + " de la función '" + nombre
-                            + "' debe ser de tipo '" + tipoEsperado
-                            + "', pero se recibió '" + tipoRecibido + "'."
-                        );
-                    }
-                }
-
-                if (!contextoFuncion && "void".equals(funcion.tipoRetorno)) {
-                    // Una llamada void puede utilizarse como instrucción,
-                    // pero no como parte de una expresión.
-                    if (esLlamadaDentroDeExpresion(nodo)) {
-                        errores.add(
-                            "La función '" + nombre
-                            + "' no devuelve un valor y no puede utilizarse en una expresión."
-                        );
-                    }
-                }
-            }
-        }
-
-        for (Nodo hijo : nodo.hijos) {
-            validarLlamadasFunciones(hijo, contextoFuncion);
-        }
-    }
-    
-    private static boolean esLlamadaDentroDeExpresion(Nodo llamada) {
-        // La validación completa del contexto de una llamada se realizará
-        // mediante el recorrido de sus padres en una siguiente mejora.
-        // Por ahora, este método evita asumir que toda llamada devuelve un valor.
-        return false;
     }
     
     public static void declararVariable(String nombre, String tipo) {
@@ -208,6 +333,34 @@ public class Semantico {
     }
     
     public static String obtenerTipoVariable(String nombre) {
+        return tablaVariables.get(nombre);
+    }
+
+    /**
+     * Obtiene el tipo de una variable considerando el ámbito de la función
+     * desde la que se está consultando.
+     *
+     * Primero busca parámetros y variables locales. Si no los encuentra,
+     * consulta las variables globales.
+     */
+    private static String obtenerTipoVariable(
+            String nombre, String nombreFuncion) {
+
+        if (nombre == null) {
+            return null;
+        }
+
+        if (nombreFuncion != null) {
+            AmbitoFuncion ambito
+                    = tablaAmbitosFunciones.get(nombreFuncion);
+
+            if (ambito != null
+                    && ambito.variables.containsKey(nombre)) {
+
+                return ambito.variables.get(nombre);
+            }
+        }
+
         return tablaVariables.get(nombre);
     }
     
@@ -244,8 +397,11 @@ public class Semantico {
         // Primero se registran todas las funciones.
         registrarFunciones(raiz);
 
+        // Después se construyen los ámbitos de variables.
+        registrarAmbitos(raiz);
+
         // Después se realizan las validaciones del programa.
-        validarLlamadasFunciones(raiz);
+        validarLlamadasFunciones(raiz, null);
         validarRetornos(raiz, false);
         validarTiposRetorno(raiz);
         validarVariablesNoDeclaradas(
@@ -348,7 +504,7 @@ public class Semantico {
             }
 
             String tipoReal = normalizarTipo(
-                    inferirTipo(nodo.hijo(0))
+                inferirTipo(nodo.hijo(0), nombreFuncion)
             );
 
             // Solo se valida cuando fue posible determinar el tipo.
@@ -377,8 +533,8 @@ public class Semantico {
     }
     
     /**
-     * Detecta identificadores que no aparecen en la tabla de variables
-     * y que tampoco son variables locales de foreach o catch.
+     * Detecta identificadores que no aparecen en la tabla de variables globales
+     * ni en el ámbito de la función correspondiente.
      */
     private static void validarVariablesNoDeclaradas(
             Nodo nodo,
@@ -388,55 +544,73 @@ public class Semantico {
         if (nodo == null) {
             return;
         }
-        
-        // Las variables locales de una función incluyen sus parámetros.
-        if ("funcion".equals(nodo.tipo)) {
-            Set<String> variablesFuncion = new HashSet<>(variablesLocales);
 
-            // Todos los hijos, excepto el último, son parámetros.
-            int cantidadParametros = Math.max(0, nodo.hijos.size() - 1);
+        // Cada función tiene sus propios parámetros y variables locales.
+        if ("funcion".equals(nodo.tipo)) {
+
+            Set<String> variablesFuncion
+                    = new HashSet<String>(variablesLocales);
+
+            // Registrar los parámetros.
+            int cantidadParametros
+                    = Math.max(0, nodo.hijos.size() - 1);
 
             for (int i = 0; i < cantidadParametros; i++) {
-                Nodo parametro = nodo.hijos.get(i);
 
-                if ("parametro".equals(parametro.tipo)) {
+                Nodo parametro = nodo.hijo(i);
+
+                if ("parametro".equals(parametro.tipo)
+                        && parametro.valor != null) {
+
                     variablesFuncion.add(parametro.valor);
                 }
             }
 
-            // Validar el cuerpo utilizando los parámetros como variables locales.
+            // Incorporar las variables locales registradas para esta función.
+            AmbitoFuncion ambito
+                    = tablaAmbitosFunciones.get(nodo.valor);
+
+            if (ambito != null) {
+                variablesFuncion.addAll(
+                        ambito.variables.keySet()
+                );
+            }
+
+            // Validar exclusivamente el cuerpo de la función.
             if (!nodo.hijos.isEmpty()) {
-                Nodo cuerpo = nodo.hijos.get(nodo.hijos.size() - 1);
+
+                Nodo cuerpo = nodo.hijo(
+                        nodo.hijos.size() - 1
+                );
 
                 validarVariablesNoDeclaradas(
-                    cuerpo,
-                    variablesFuncion,
-                    erroresReportados
+                        cuerpo,
+                        variablesFuncion,
+                        erroresReportados
                 );
             }
 
             return;
         }
-        
-        // Las variables declaradas durante el análisis sintáctico
-        // ya están registradas en tablaVariables.
+
+        // Comprobar los identificadores utilizados en el nodo.
         comprobarVariable(
-            nodo,
-            variablesLocales,
-            erroresReportados
+                nodo,
+                variablesLocales,
+                erroresReportados
         );
 
-        // Una variable de foreach existe dentro de su cuerpo.
+        // La variable de foreach está disponible en su cuerpo.
         if ("cicloForeach".equals(nodo.tipo)) {
 
             comprobarNombre(
-                nodo.atributo("coleccion"),
-                variablesLocales,
-                erroresReportados
+                    nodo.atributo("coleccion"),
+                    variablesLocales,
+                    erroresReportados
             );
 
-            Set<String> localesCiclo =
-                new HashSet<String>(variablesLocales);
+            Set<String> localesCiclo
+                    = new HashSet<String>(variablesLocales);
 
             if (nodo.valor != null && !nodo.valor.isEmpty()) {
                 localesCiclo.add(nodo.valor);
@@ -444,45 +618,47 @@ public class Semantico {
 
             for (Nodo hijo : nodo.hijos) {
                 validarVariablesNoDeclaradas(
-                    hijo,
-                    localesCiclo,
-                    erroresReportados
+                        hijo,
+                        localesCiclo,
+                        erroresReportados
                 );
             }
 
             return;
         }
 
-        // La variable de catch solo está disponible dentro de su bloque.
+        // La variable de catch está disponible dentro de su bloque.
         if ("clausulaCatch".equals(nodo.tipo)) {
 
-            Set<String> localesCatch =
-                new HashSet<String>(variablesLocales);
+            Set<String> localesCatch
+                    = new HashSet<String>(variablesLocales);
 
-            String variableExcepcion =
-                nodo.atributo("variableExcepcion");
+            String variableExcepcion
+                    = nodo.atributo("variableExcepcion");
 
             if (variableExcepcion != null
                     && !variableExcepcion.isEmpty()) {
+
                 localesCatch.add(variableExcepcion);
             }
 
             for (Nodo hijo : nodo.hijos) {
                 validarVariablesNoDeclaradas(
-                    hijo,
-                    localesCatch,
-                    erroresReportados
+                        hijo,
+                        localesCatch,
+                        erroresReportados
                 );
             }
 
             return;
         }
 
+        // Continuar recorriendo el árbol.
         for (Nodo hijo : nodo.hijos) {
             validarVariablesNoDeclaradas(
-                hijo,
-                variablesLocales,
-                erroresReportados
+                    hijo,
+                    variablesLocales,
+                    erroresReportados
             );
         }
     }
@@ -571,94 +747,135 @@ public class Semantico {
         }
     }
     
-    /**
-    * Valida que los elementos de un arreglo sean compatibles
-    * con el tipo de dato declarado.
-    */
-   private static void validarElementosArreglo(
-           String tipoEsperado, Nodo arreglo, String nombreVariable) {
+    private static void validarElementosArreglo(
+            String tipoEsperado,
+            Nodo arreglo,
+            String nombreVariable,
+            String nombreFuncion) {
 
-       if (tipoEsperado == null || arreglo == null
-               || !"arreglo".equals(arreglo.tipo)
-               || !tipoEsperado.endsWith("[]")) {
-           return;
-       }
+        if (tipoEsperado == null || arreglo == null
+                || !"arreglo".equals(arreglo.tipo)
+                || !tipoEsperado.endsWith("[]")) {
+            return;
+        }
 
-       // Obtiene el tipo de los elementos, por ejemplo:
-       // int[] -> int; string[] -> string.
-       String tipoElemento = tipoEsperado.substring(
-           0, tipoEsperado.length() - 2
-       );
+        String tipoElemento = tipoEsperado.substring(
+                0, tipoEsperado.length() - 2
+        );
 
-       for (int i = 0; i < arreglo.hijos.size(); i++) {
-           Nodo elemento = arreglo.hijo(i);
-           String tipoRecibido = inferirTipo(elemento);
+        for (int i = 0; i < arreglo.hijos.size(); i++) {
 
-           if (!tiposCompatibles(tipoElemento, tipoRecibido)) {
-               error(
-                   "El elemento " + (i + 1) + " del arreglo '"
-                   + nombreVariable + "' es de tipo '"
-                   + tipoRecibido + "', pero se esperaba '"
-                   + tipoElemento + "'."
-               );
-           }
-       }
-   }
+            Nodo elemento = arreglo.hijo(i);
+
+            String tipoRecibido = inferirTipo(
+                    elemento, nombreFuncion
+            );
+
+            if (!tiposCompatibles(tipoElemento, tipoRecibido)) {
+
+                error(
+                        "El elemento " + (i + 1) + " del arreglo '"
+                        + nombreVariable + "' es de tipo '"
+                        + tipoRecibido + "', pero se esperaba '"
+                        + tipoElemento + "'."
+                );
+            }
+        }
+    }
     
     /**
-     * Valida los tipos de las declaraciones y asignaciones.
+     * Inicia la validación de tipos desde el ámbito global.
      */
     private static void validarTipos(Nodo nodo) {
+        validarTipos(nodo, null);
+    }
+
+    /**
+     * Valida declaraciones y asignaciones considerando el ámbito
+     * correspondiente.
+     */
+    private static void validarTipos(
+            Nodo nodo, String nombreFuncion) {
+
         if (nodo == null) {
             return;
         }
 
-        // Declaración de una variable.
+        // Al entrar a una función, se utiliza su propio ámbito.
+        if ("funcion".equals(nodo.tipo)) {
+
+            String funcionActual = nodo.valor;
+
+            // Se valida el cuerpo, que es el último hijo.
+            if (!nodo.hijos.isEmpty()) {
+
+                Nodo cuerpo = nodo.hijo(
+                        nodo.hijos.size() - 1
+                );
+
+                validarTipos(cuerpo, funcionActual);
+            }
+
+            return;
+        }
+
+        // Validación de declaraciones.
         if ("declaracionVariable".equals(nodo.tipo)) {
+
             String tipoEsperado = nodo.atributo("tipoDato");
             Nodo inicializador = nodo.hijo(0);
 
             if (tipoEsperado != null && inicializador != null) {
-                String tipoRecibido = inferirTipo(inicializador);
 
-                if (!tiposCompatibles(tipoEsperado, tipoRecibido)) {
-                    error("La variable '" + nodo.valor
-                        + "' es de tipo '" + tipoEsperado
-                        + "', pero recibe un valor de tipo '"
-                        + tipoRecibido + "'.");
+                String tipoRecibido = inferirTipo(
+                        inicializador, nombreFuncion
+                );
+
+                if (!tiposCompatibles(
+                        tipoEsperado, tipoRecibido)) {
+
+                    error(
+                            "La variable '" + nodo.valor
+                            + "' es de tipo '" + tipoEsperado
+                            + "', pero recibe un valor de tipo '"
+                            + tipoRecibido + "'."
+                    );
+
                 } else if (tipoEsperado.endsWith("[]")
                         && "arreglo".equals(tipoRecibido)) {
 
                     validarElementosArreglo(
-                        tipoEsperado, inicializador, nodo.valor
+                            tipoEsperado,
+                            inicializador,
+                            nodo.valor,
+                            nombreFuncion
                     );
                 }
             }
         }
 
-        // Valida asignaciones normales y compuestas.
+        // Validación de asignaciones normales y compuestas.
         if ("asignacion".equals(nodo.tipo)
                 || "asignacionSimple".equals(nodo.tipo)) {
 
             String operador = nodo.atributoPorDefecto(
-                "operadorAsignacion", "="
+                    "operadorAsignacion", "="
             );
 
-            String tipoEsperado =
-                obtenerTipoVariable(nodo.valor);
+            String tipoEsperado = obtenerTipoVariable(
+                    nodo.valor, nombreFuncion
+            );
 
             if (tipoEsperado != null
-                    && nodo.hijos != null
                     && !nodo.hijos.isEmpty()) {
 
-                // El último hijo contiene el valor asignado.
-                // Esto también permite conservar la validación
-                // de asignaciones a elementos de arreglos.
-                Nodo valorAsignado =
-                    nodo.hijo(nodo.hijos.size() - 1);
+                Nodo valorAsignado = nodo.hijo(
+                        nodo.hijos.size() - 1
+                );
 
-                String tipoRecibido =
-                    inferirTipo(valorAsignado);
+                String tipoRecibido = inferirTipo(
+                        valorAsignado, nombreFuncion
+                );
 
                 if ("=".equals(operador)) {
 
@@ -666,21 +883,21 @@ public class Semantico {
                             && "arreglo".equals(tipoRecibido)) {
 
                         validarElementosArreglo(
-                            tipoEsperado,
-                            valorAsignado,
-                            nodo.valor
+                                tipoEsperado,
+                                valorAsignado,
+                                nodo.valor,
+                                nombreFuncion
                         );
 
                     } else if (!tipoEsperado.endsWith("[]")
                             && !tiposCompatibles(
-                                tipoEsperado,
-                                tipoRecibido)) {
+                                    tipoEsperado, tipoRecibido)) {
 
                         error(
-                            "No se puede asignar un valor de tipo '"
-                            + tipoRecibido + "' a la variable '"
-                            + nodo.valor + "' de tipo '"
-                            + tipoEsperado + "'."
+                                "No se puede asignar un valor de tipo '"
+                                + tipoRecibido + "' a la variable '"
+                                + nodo.valor + "' de tipo '"
+                                + tipoEsperado + "'."
                         );
                     }
 
@@ -690,29 +907,25 @@ public class Semantico {
                         || "/=".equals(operador)
                         || "%=".equals(operador)) {
 
-                    String tipoDestino =
-                        normalizarTipo(tipoEsperado);
+                    String tipoDestino
+                            = normalizarTipo(tipoEsperado);
 
-                    String tipoOrigen =
-                        normalizarTipo(tipoRecibido);
+                    String tipoOrigen
+                            = normalizarTipo(tipoRecibido);
 
-                    // No se permiten asignaciones compuestas
-                    // sobre arreglos.
                     if (tipoEsperado.endsWith("[]")) {
 
                         error(
-                            "El operador '" + operador
-                            + "' no es válido para la variable '"
-                            + nodo.valor + "' de tipo '"
-                            + tipoEsperado + "'."
+                                "El operador '" + operador
+                                + "' no es válido para la variable '"
+                                + nodo.valor + "' de tipo '"
+                                + tipoEsperado + "'."
                         );
 
                     } else if (!"desconocido".equals(tipoOrigen)) {
 
                         boolean compatible = false;
 
-                        // += permite concatenar cuando el destino
-                        // es una cadena.
                         if ("+=".equals(operador)
                                 && "string".equals(tipoDestino)) {
 
@@ -721,19 +934,18 @@ public class Semantico {
                         } else if (esNumerico(tipoDestino)
                                 && esNumerico(tipoOrigen)) {
 
-                            // Los demás operadores compuestos
-                            // requieren operandos numéricos.
                             compatible = true;
                         }
 
                         if (!compatible) {
+
                             error(
-                                "No se puede aplicar el operador '"
-                                + operador + "' a la variable '"
-                                + nodo.valor + "' de tipo '"
-                                + tipoEsperado
-                                + "' con un valor de tipo '"
-                                + tipoRecibido + "'."
+                                    "No se puede aplicar el operador '"
+                                    + operador + "' a la variable '"
+                                    + nodo.valor + "' de tipo '"
+                                    + tipoEsperado
+                                    + "' con un valor de tipo '"
+                                    + tipoRecibido + "'."
                             );
                         }
                     }
@@ -741,15 +953,26 @@ public class Semantico {
             }
         }
 
+        // Continuar recorriendo el AST con el mismo ámbito.
         for (Nodo hijo : nodo.hijos) {
-            validarTipos(hijo);
+            validarTipos(hijo, nombreFuncion);
         }
     }
 
     /**
-     * Intenta determinar el tipo de una expresión del AST.
+     * Mantiene la inferencia de tipos para consultas globales.
      */
     private static String inferirTipo(Nodo nodo) {
+        return inferirTipo(nodo, null);
+    }
+
+    /**
+     * Determina el tipo de una expresión considerando las variables locales de
+     * la función correspondiente.
+     */
+    private static String inferirTipo(
+            Nodo nodo, String nombreFuncion) {
+
         if (nodo == null) {
             return "desconocido";
         }
@@ -757,15 +980,30 @@ public class Semantico {
         if ("valor".equals(nodo.tipo)) {
             String tipoValor = nodo.atributo("tipoValor");
 
-            if ("numero".equals(tipoValor)) return "int";
-            if ("decimal".equals(tipoValor)) return "double";
-            if ("cadena".equals(tipoValor)) return "string";
+            if ("numero".equals(tipoValor)) {
+                return "int";
+            }
+            if ("decimal".equals(tipoValor)) {
+                return "double";
+            }
+            if ("cadena".equals(tipoValor)) {
+                return "string";
+            }
+
             if ("true".equals(tipoValor)
-                    || "false".equals(tipoValor)) return "boolean";
-            if ("null".equals(tipoValor)) return "null";
+                    || "false".equals(tipoValor)) {
+                return "boolean";
+            }
+
+            if ("null".equals(tipoValor)) {
+                return "null";
+            }
 
             if ("identificador".equals(tipoValor)) {
-                String tipo = obtenerTipoVariable(nodo.valor);
+                String tipo = obtenerTipoVariable(
+                        nodo.valor, nombreFuncion
+                );
+
                 return tipo == null ? "desconocido" : tipo;
             }
         }
@@ -773,7 +1011,7 @@ public class Semantico {
         if ("lecturaConsola".equals(nodo.tipo)) {
             return "string";
         }
-        
+
         // Reconoce las conversiones de tipos de C#.
         if ("conversionTipo".equals(nodo.tipo)) {
             String tipo = nodo.atributo("tipo");
@@ -781,18 +1019,19 @@ public class Semantico {
             if ("int".equals(tipo)) {
                 return "int";
             }
-
             if ("double".equals(tipo)) {
                 return "double";
             }
         }
-        
+
         if ("propiedadArreglo".equals(nodo.tipo)) {
             return "int";
         }
 
         if ("accesoArreglo".equals(nodo.tipo)) {
-            String tipo = obtenerTipoVariable(nodo.valor);
+            String tipo = obtenerTipoVariable(
+                    nodo.valor, nombreFuncion
+            );
 
             if (tipo != null && tipo.endsWith("[]")) {
                 return tipo.substring(0, tipo.length() - 2);
@@ -808,34 +1047,54 @@ public class Semantico {
         }
 
         if ("agrupacion".equals(nodo.tipo)) {
-            return inferirTipo(nodo.hijo(0));
+            return inferirTipo(nodo.hijo(0), nombreFuncion);
         }
 
-        // Para operaciones aritméticas, intenta deducir el tipo
-        // a partir de los operandos.
+        // Las llamadas a funciones utilizan su tipo de retorno.
+        if ("llamadaFuncion".equals(nodo.tipo)) {
+            FuncionInfo funcion = tablaFunciones.get(nodo.valor);
+
+            if (funcion != null) {
+                return funcion.tipoRetorno;
+            }
+
+            return "desconocido";
+        }
+
+        // Inferencia de operaciones aritméticas.
         if (nodo.atributo("operador") != null
                 && nodo.hijos.size() >= 2) {
 
             String operador = nodo.atributo("operador");
-            String tipo1 = inferirTipo(nodo.hijo(0));
-            String tipo2 = inferirTipo(nodo.hijo(1));
+
+            String tipo1 = inferirTipo(
+                    nodo.hijo(0), nombreFuncion
+            );
+
+            String tipo2 = inferirTipo(
+                    nodo.hijo(1), nombreFuncion
+            );
 
             if ("+".equals(operador)
                     && ("string".equals(tipo1)
-                        || "string".equals(tipo2))) {
+                    || "string".equals(tipo2))) {
+
                 return "string";
             }
 
             if (esNumerico(tipo1) && esNumerico(tipo2)) {
+
                 if ("double".equals(tipo1)
                         || "double".equals(tipo2)
                         || "float".equals(tipo1)
                         || "float".equals(tipo2)) {
+
                     return "double";
                 }
 
                 if ("long".equals(tipo1)
                         || "long".equals(tipo2)) {
+
                     return "long";
                 }
 
@@ -845,7 +1104,7 @@ public class Semantico {
 
         // Para nodos de expresión con un solo hijo.
         if (nodo.hijos.size() == 1) {
-            return inferirTipo(nodo.hijo(0));
+            return inferirTipo(nodo.hijo(0), nombreFuncion);
         }
 
         return "desconocido";
@@ -942,6 +1201,46 @@ public class Semantico {
             return;
         }
 
+                // Cada función tiene su propio estado de inicialización.
+        if ("funcion".equals(nodo.tipo)) {
+
+            Set<String> estadoFuncion =
+                new HashSet<String>(inicializadas);
+
+            // Se eliminan del estado heredado las variables locales
+            // de esta función, para evitar compartir estados por nombre.
+            AmbitoFuncion ambito =
+                tablaAmbitosFunciones.get(nodo.valor);
+
+            if (ambito != null) {
+                for (String nombreVariable : ambito.variables.keySet()) {
+                    estadoFuncion.remove(nombreVariable);
+                }
+            }
+
+            // Los parámetros se consideran inicializados al entrar
+            // en la función, porque reciben sus valores al invocarla.
+            FuncionInfo funcion = tablaFunciones.get(nodo.valor);
+
+            if (funcion != null) {
+                for (String nombreParametro : funcion.nombresParametros) {
+                    estadoFuncion.add(nombreParametro);
+                }
+            }
+
+            // El último hijo de la función contiene su cuerpo.
+            if (!nodo.hijos.isEmpty()) {
+                validarInicializacion(
+                    nodo.hijo(nodo.hijos.size() - 1),
+                    estadoFuncion
+                );
+            }
+
+            // No se propagan las variables locales al programa
+            // ni a las demás funciones.
+            return;
+        }
+        
         // El programa y los bloques ejecutan sus instrucciones
         // en orden, por lo que se conserva el estado entre ellas.
         if ("programa".equals(nodo.tipo)
@@ -1287,15 +1586,41 @@ public class Semantico {
             return;
         }
 
-        if (obtenerTipoVariable(nombre) == null) {
+        // Solo se comprueban variables que estén registradas
+        // en el ámbito global o en alguno de los ámbitos de función.
+        if (!variableRegistrada(nombre)) {
             return;
         }
 
         if (!inicializadas.contains(nombre)) {
             error(
-                "La variable '" + nombre
-                + "' se utiliza antes de recibir un valor."
+                    "La variable '" + nombre
+                    + "' se utiliza antes de recibir un valor."
             );
         }
+    }
+    
+    /**
+     * Comprueba si una variable está registrada en algún ámbito.
+     */
+    private static boolean variableRegistrada(String nombre) {
+
+        if (nombre == null || nombre.isEmpty()) {
+            return false;
+        }
+
+        // Primero se revisan las variables globales.
+        if (tablaVariables.containsKey(nombre)) {
+            return true;
+        }
+
+        // Después se revisan las variables de las funciones.
+        for (AmbitoFuncion ambito : tablaAmbitosFunciones.values()) {
+            if (ambito.variables.containsKey(nombre)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
