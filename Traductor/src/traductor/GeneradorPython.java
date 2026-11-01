@@ -98,7 +98,6 @@ public class GeneradorPython {
     private String generarDeclaracion(Nodo n, int nivel) {
         String nombre = n.valor;
 
-        // Si tiene inicializador, genera la asignación.
         if (!n.hijos.isEmpty()) {
             return tab(nivel) + nombre + " = "
                     + generarExpr(n.hijo(0)) + "\n";

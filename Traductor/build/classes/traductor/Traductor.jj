@@ -100,6 +100,9 @@ TOKEN : {
 |   < BYTE: "byte" >
 |   < VOID: "void" >
 |   < STATIC: "static" >
+|   < CONST: "const" >
+|   < PUBLIC: "public" >
+|   < PRIVATE: "private" >
 |   <COMENTARIO_LINEA: "//" (~["\n", "\r"])* >
 |   <COMENTARIO_BLOQUE: "/*" (~["*"] | "*" ~["/"])* "*/" >
 }
@@ -387,11 +390,21 @@ Nodo declaracionVariable() :
 {
     Token t;
     String tipoDato = "";
+    boolean esConstante = false;
+
     Nodo lista = new Nodo("declaracionesMultiples");
     Nodo variable;
 }
 {
-    { regla("declaracionVariable -> tipo listaVariables puntocoma"); }
+    { regla("declaracionVariable -> modificador tipo listaVariables puntocoma"); }
+
+    [
+        t=<CONST>
+        {
+            mostrarToken(t);
+            esConstante = true;
+        }
+    ]
 
     (
           t=<INT>     { mostrarToken(t); tipoDato = "int"; }
@@ -412,13 +425,16 @@ Nodo declaracionVariable() :
         { tipoDato = tipoDato + "[]"; }
     ]
 
-    variable=declaracionVariableElemento(tipoDato) {
+    variable=declaracionVariableElemento(tipoDato, esConstante)
+    {
         lista.agregar(variable);
     }
 
     (
         t=<COMA> { mostrarToken(t); }
-        variable=declaracionVariableElemento(tipoDato) {
+
+        variable=declaracionVariableElemento(tipoDato, esConstante)
+        {
             lista.agregar(variable);
         }
     )*
@@ -428,13 +444,23 @@ Nodo declaracionVariable() :
     { return lista; }
 }
 
-Nodo declaracionVariableElemento(String tipoDato) :
-{ Token t; Nodo n = new Nodo("declaracionVariable"); Nodo exp; }
+Nodo declaracionVariableElemento(String tipoDato, boolean esConstante) :
 {
-    t=<IDENTIFICADOR> {
+    Token t;
+    Nodo n = new Nodo("declaracionVariable");
+    Nodo exp;
+}
+{
+    t=<IDENTIFICADOR>
+    {
         mostrarToken(t);
+
         n.valor = t.image;
         n.atributo("tipoDato", tipoDato);
+        n.atributo(
+            "constante",
+            esConstante ? "true" : "false"
+        );
     }
 
     [
@@ -449,10 +475,20 @@ Nodo declaracionVariableFor() :
 {
     Token t;
     String tipoDato = "";
+    boolean esConstante = false;
+
     Nodo lista = new Nodo("declaracionesMultiples");
     Nodo variable;
 }
 {
+    [
+        t=<CONST>
+        {
+            mostrarToken(t);
+            esConstante = true;
+        }
+    ]
+
     (
           t=<INT>     { mostrarToken(t); tipoDato = "int"; }
         | t=<BOOL>    { mostrarToken(t); tipoDato = "bool"; }
@@ -472,13 +508,16 @@ Nodo declaracionVariableFor() :
         { tipoDato = tipoDato + "[]"; }
     ]
 
-    variable=declaracionVariableElemento(tipoDato) {
+    variable=declaracionVariableElemento(tipoDato, esConstante)
+    {
         lista.agregar(variable);
     }
 
     (
         t=<COMA> { mostrarToken(t); }
-        variable=declaracionVariableElemento(tipoDato) {
+
+        variable=declaracionVariableElemento(tipoDato, esConstante)
+        {
             lista.agregar(variable);
         }
     )*
@@ -940,7 +979,7 @@ Nodo asignacionSimple() :
 }
 
 // ------------------------------------------------------
-// PRINT
+// Escritura
 // ------------------------------------------------------
 Nodo escritura() :
 {
@@ -949,52 +988,38 @@ Nodo escritura() :
     Nodo exp;
 }
 {
+    t=<CONSOLE> { mostrarToken(t); }
+    t=<PUNTO> { mostrarToken(t); }
+
     (
         (
-            (
-                t=<PRINT>
-                { mostrarToken(t); n.atributo("variante", "print"); }
-              |
-                t=<PRINTLN>
-                { mostrarToken(t); n.atributo("variante", "println"); }
-            )
+            t=<WRITELINE>
+            {
+                mostrarToken(t);
+                n.atributo("variante", "WriteLine");
+            }
             t=<PARENTESIS_IZQ> { mostrarToken(t); }
             exp=expresion() { n.agregar(exp); }
             t=<PARENTESIS_DER> { mostrarToken(t); }
         )
       |
         (
-            t=<CONSOLE> { mostrarToken(t); }
-            t=<PUNTO> { mostrarToken(t); }
             (
-                (
-                    t=<WRITELINE>
-                    {
-                        mostrarToken(t);
-                        n.atributo("variante", "WriteLine");
-                    }
-                    t=<PARENTESIS_IZQ> { mostrarToken(t); }
-                    exp=expresion() { n.agregar(exp); }
-                    t=<PARENTESIS_DER> { mostrarToken(t); }
-                )
+                t=<READLINE>
               |
-                (
-                    (
-                        t=<READLINE>
-                      |
-                        t=<READKEY>
-                    )
-                    {
-                        mostrarToken(t);
-                        n = new Nodo("lecturaConsola");
-                    }
-                    t=<PARENTESIS_IZQ> { mostrarToken(t); }
-                    t=<PARENTESIS_DER> { mostrarToken(t); }
-                )
+                t=<READKEY>
             )
+            {
+                mostrarToken(t);
+                n = new Nodo("lecturaConsola");
+            }
+            t=<PARENTESIS_IZQ> { mostrarToken(t); }
+            t=<PARENTESIS_DER> { mostrarToken(t); }
         )
-        t=<PUNTO_Y_COMA> { mostrarToken(t); }
     )
+
+    t=<PUNTO_Y_COMA> { mostrarToken(t); }
+
     {
         return n;
     }
@@ -1126,7 +1151,6 @@ String operadorRelacional() :
 // ------------------------------------------------------
 // EXPRESIONES ARITMETICAS
 // ------------------------------------------------------
-
 Nodo expresion() :
 { Nodo n; }
 {

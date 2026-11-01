@@ -4,20 +4,19 @@ import java.util.*;
 public class Semantico {
 
     private static List<String> errores = new ArrayList<>();
-
     private static Map<String, String> tablaVariables = new LinkedHashMap<>();
-
-    // Información de las funciones declaradas en el programa.
     private static Map<String, FuncionInfo> tablaFunciones = new LinkedHashMap<>();
+    private static Map<String, AmbitoFuncion> tablaAmbitosFunciones = new LinkedHashMap<>();
+    private static Set<String> constantesGlobales = new HashSet<>();
 
-    // Ámbitos independientes para las variables de cada función.
-    private static Map<String, AmbitoFuncion> tablaAmbitosFunciones =
-            new LinkedHashMap<>();
-
-    // Representa las variables y parámetros de una función.
+    // Representa las variables, constantes y parámetros de una función.
     private static class AmbitoFuncion {
+
         String nombreFuncion;
+
         Map<String, String> variables = new LinkedHashMap<>();
+
+        Set<String> constantes = new HashSet<>();
 
         AmbitoFuncion(String nombreFuncion) {
             this.nombreFuncion = nombreFuncion;
@@ -42,6 +41,7 @@ public class Semantico {
         tablaVariables.clear();
         tablaFunciones.clear();
         tablaAmbitosFunciones.clear();
+        constantesGlobales.clear();
     }
     
     private static void registrarFunciones(Nodo nodo) {
@@ -96,6 +96,7 @@ public class Semantico {
     private static void registrarAmbitos(Nodo raiz) {
         tablaVariables.clear();
         tablaAmbitosFunciones.clear();
+        constantesGlobales.clear();
 
         if (raiz == null) {
             return;
@@ -118,7 +119,7 @@ public class Semantico {
             return;
         }
 
-        registrarDeclaracionEnAmbito(nodo, tablaVariables, "global");
+        registrarDeclaracionEnAmbito(nodo, tablaVariables, constantesGlobales, "global");
 
         for (Nodo hijo : nodo.hijos) {
             registrarVariablesGlobales(hijo);
@@ -200,11 +201,7 @@ public class Semantico {
             return;
         }
 
-        registrarDeclaracionEnAmbito(
-            nodo,
-            ambito.variables,
-            "la función '" + ambito.nombreFuncion + "'"
-        );
+        registrarDeclaracionEnAmbito(nodo, ambito.variables, ambito.constantes, "la función '" + ambito.nombreFuncion + "'");
 
         for (Nodo hijo : nodo.hijos) {
             registrarVariablesLocales(hijo, ambito);
@@ -212,36 +209,75 @@ public class Semantico {
     }
 
     /**
-     * Registra una declaración individual o una declaración múltiple.
+     * Registra una declaración individual y reconoce si es constante.
      */
     private static void registrarDeclaracionEnAmbito(
             Nodo nodo,
             Map<String, String> variables,
+            Set<String> constantes,
             String descripcionAmbito) {
 
         if (nodo == null) {
             return;
         }
 
-        if ("declaracionVariable".equals(nodo.tipo)) {
-            String nombre = nodo.valor;
-            String tipo = normalizarTipo(
+        if (!"declaracionVariable".equals(nodo.tipo)) {
+            return;
+        }
+
+        String nombre = nodo.valor;
+
+        String tipo = normalizarTipo(
                 nodo.atributoPorDefecto("tipoDato", "desconocido")
-            );
+        );
 
-            if (nombre == null || nombre.trim().isEmpty()) {
-                return;
-            }
+        boolean esConstante
+                = "true".equals(nodo.atributo("constante"));
 
-            if (variables.containsKey(nombre)) {
-                error(
+        if (nombre == null || nombre.trim().isEmpty()) {
+            return;
+        }
+
+        if (variables.containsKey(nombre)) {
+
+            error(
                     "La variable '" + nombre
                     + "' ya fue declarada en " + descripcionAmbito + "."
-                );
-            } else {
-                variables.put(nombre, tipo);
+            );
+
+        } else {
+
+            variables.put(nombre, tipo);
+
+            if (esConstante) {
+                constantes.add(nombre);
             }
         }
+    }
+    
+    /**
+     * Comprueba si una variable es constante en el ámbito correspondiente.
+     */
+    private static boolean esConstante(
+            String nombre, String nombreFuncion) {
+
+        if (nombre == null || nombre.isEmpty()) {
+            return false;
+        }
+
+        // Primero se revisa el ámbito de la función.
+        if (nombreFuncion != null) {
+
+            AmbitoFuncion ambito
+                    = tablaAmbitosFunciones.get(nombreFuncion);
+
+            if (ambito != null && ambito.variables.containsKey(nombre)) {
+                return ambito.constantes.contains(nombre);
+            }
+        }
+
+        // Si no está declarada localmente, se revisa el ámbito global.
+        return constantesGlobales.contains(nombre);
     }
     
     /**
@@ -377,7 +413,9 @@ public class Semantico {
     }
 
     public static void error(String mensaje) {
-        errores.add(mensaje);
+        if (mensaje != null && !errores.contains(mensaje)) {
+            errores.add(mensaje);
+        }
     }
 
     public static boolean hayErrores() {
@@ -825,6 +863,18 @@ public class Semantico {
             String tipoEsperado = nodo.atributo("tipoDato");
             Nodo inicializador = nodo.hijo(0);
 
+            boolean esConstante
+                    = "true".equals(nodo.atributo("constante"));
+
+            // Una constante siempre debe tener inicializador.
+            if (esConstante && inicializador == null) {
+
+                error(
+                        "La constante '" + nodo.valor
+                        + "' debe inicializarse al momento de declararse."
+                );
+            }
+
             if (tipoEsperado != null && inicializador != null) {
 
                 String tipoRecibido = inferirTipo(
@@ -858,6 +908,15 @@ public class Semantico {
         if ("asignacion".equals(nodo.tipo)
                 || "asignacionSimple".equals(nodo.tipo)) {
 
+            // Las constantes no pueden recibir nuevas asignaciones.
+            if (esConstante(nodo.valor, nombreFuncion)) {
+
+                error(
+                        "No se puede modificar la constante '"
+                        + nodo.valor + "'."
+                );
+            }
+            
             String operador = nodo.atributoPorDefecto(
                     "operadorAsignacion", "="
             );
@@ -953,6 +1012,18 @@ public class Semantico {
             }
         }
 
+        // Validación de incrementos y decrementos.
+        if ("incrementoDecremento".equals(nodo.tipo)) {
+
+            if (esConstante(nodo.valor, nombreFuncion)) {
+
+                error(
+                        "No se puede modificar la constante '"
+                        + nodo.valor + "'."
+                );
+            }
+        }
+        
         // Continuar recorriendo el AST con el mismo ámbito.
         for (Nodo hijo : nodo.hijos) {
             validarTipos(hijo, nombreFuncion);

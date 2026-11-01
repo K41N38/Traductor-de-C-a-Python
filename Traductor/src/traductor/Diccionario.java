@@ -2,13 +2,9 @@ package traductor;
 
 import java.io.*;
 import java.util.*;
+import java.nio.charset.StandardCharsets;
 
 /**
- * RECONSTRUIDA a partir del uso que hace Analizador.jj:
- *   Diccionario.cargarCSV("palabras.csv")
- *   Diccionario.mapa.containsKey(palabra) / Diccionario.mapa.get(palabra)
- * Si ya tienes tu propia versión original, reemplaza este archivo por el tuyo.
- *
  * Formato esperado de palabras.csv (con encabezado):
  *   lexema,token,expresion,lenguaje,clasificacion,funcion
  * El campo "lenguaje" puede venir entre comillas con comas adentro
@@ -21,7 +17,7 @@ public class Diccionario {
     public static void cargarCSV(String rutaArchivo) {
         mapa.clear();
         try (BufferedReader br = new BufferedReader(
-                new InputStreamReader(new FileInputStream(rutaArchivo), "UTF-8"))) {
+                new InputStreamReader(new FileInputStream(rutaArchivo), StandardCharsets.UTF_8))) {
 
             String linea;
             boolean primera = true;
@@ -41,7 +37,7 @@ public class Diccionario {
 
                 if (lexema.isEmpty()) continue;
 
-                mapa.put(lexema.toLowerCase(),
+                mapa.put(lexema.toLowerCase(Locale.ROOT),
                         new PalabraInfo(lexema, token, expresion, lenguaje, clasificacion, funcion));
             }
             System.out.println("Diccionario cargado: " + mapa.size() + " palabras (" + rutaArchivo + ")");
