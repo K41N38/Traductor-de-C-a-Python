@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 
 /**
  * Formato esperado de palabras.csv (con encabezado):
- *   lexema,token,expresion,lenguaje,clasificacion,funcion
+ *   lexema,token,expresion,lenguaje,clasificacion,funcion, estado
  * El campo "lenguaje" puede venir entre comillas con comas adentro
  * (ej. "C, JavaScript"), por eso el parseo respeta comillas.
  */
@@ -34,11 +34,12 @@ public class Diccionario {
                 String lenguaje      = get(campos, 3);
                 String clasificacion = get(campos, 4);
                 String funcion       = get(campos, 5);
+                String estado        = get(campos, 6);
 
                 if (lexema.isEmpty()) continue;
 
                 mapa.put(lexema.toLowerCase(Locale.ROOT),
-                        new PalabraInfo(lexema, token, expresion, lenguaje, clasificacion, funcion));
+                        new PalabraInfo(lexema, token, expresion, lenguaje, clasificacion, funcion, estado));
             }
             System.out.println("Diccionario cargado: " + mapa.size() + " palabras (" + rutaArchivo + ")");
         } catch (IOException e) {

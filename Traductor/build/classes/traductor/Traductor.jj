@@ -16,37 +16,134 @@ public class Traductor {
     }
 
     public static void mostrarToken(Token t) {
+
         String palabra = t.image.toLowerCase();
-        System.out.println("----------------------");
-        if (Diccionario.mapa.containsKey(palabra)) {
-            PalabraInfo info = Diccionario.mapa.get(palabra);
-            System.out.println("Token: " + info.token);
-            System.out.println("Expresion Regular: " + info.expresion);
-            System.out.println("Lexema: " + t.image);
-            if (info.lenguaje != null && !info.lenguaje.isEmpty())
-                System.out.println("Lenguaje: " + info.lenguaje);
-            if (info.clasificacion != null && !info.clasificacion.isEmpty())
-                System.out.println("Clasificacion: " + info.clasificacion);
-            if (info.funcion != null && !info.funcion.isEmpty())
-                System.out.println("Funcion: " + info.funcion);
+
+        // Valores generales de los metadatos.
+        String token = "";
+        String expresion = "No especificada";
+        String lexema = t.image;
+        String lenguajes = "C#";
+        String clasificacion = "No especificada";
+        String funcion = "Elemento reconocido por el analizador lexico.";
+        String estado = "Implementado";
+
+        PalabraInfo info = null;
+
+        // ==================================================
+        // 1. BUSCAR INFORMACION EN EL DICCIONARIO
+        // ==================================================
+
+        // Los comentarios utilizan claves especiales.
+        if (t.kind == COMENTARIO_LINEA) {
+
+            info = Diccionario.mapa.get("// ...");
+
+        } else if (t.kind == COMENTARIO_BLOQUE) {
+
+            info = Diccionario.mapa.get("/* ... */");
+
         } else {
-            if (t.kind == IDENTIFICADOR) {
-                System.out.println("Token: IDENTIFICADOR");
-                System.out.println("Lexema: " + t.image);
-            } else if (t.kind == NUMERO) {
-                System.out.println("Token: NUMERO");
-                System.out.println("Lexema: " + t.image);
-            } else if (t.kind == DECIMAL) {
-                System.out.println("Token: DECIMAL");
-                System.out.println("Lexema: " + t.image);
-            } else if (t.kind == CADENA) {
-                System.out.println("Token: CADENA");
-                System.out.println("Lexema: " + t.image);
-            } else {
-                System.out.println("Token: " + t.image);
-                System.out.println("Lexema: " + t.image);
+
+            info = Diccionario.mapa.get(palabra);
+        }
+
+        // ==================================================
+        // 2. UTILIZAR LOS METADATOS DEL CSV
+        // ==================================================
+
+        if (info != null) {
+
+            token = info.token;
+
+            if (info.expresion != null && !info.expresion.isEmpty())
+                expresion = info.expresion;
+
+            if (info.lenguaje != null && !info.lenguaje.isEmpty())
+                lenguajes = info.lenguaje;
+
+            if (info.clasificacion != null && !info.clasificacion.isEmpty())
+                clasificacion = info.clasificacion;
+
+            if (info.funcion != null && !info.funcion.isEmpty())
+                funcion = info.funcion;
+
+            if (info.estado != null && !info.estado.isEmpty())
+                estado = info.estado;
+
+        } else {
+
+            // ==================================================
+            // 3. METADATOS PARA TOKENS NO REGISTRADOS EN EL CSV
+            // ==================================================
+
+            switch (t.kind) {
+
+                case IDENTIFICADOR:
+
+                    token = "IDENTIFICADOR";
+                    clasificacion = "Identificador";
+                    funcion = "Nombre definido por el programador para representar variables, funciones, parametros u otros elementos del programa.";
+                    break;
+
+                case NUMERO:
+
+                    token = "NUMERO";
+                    clasificacion = "Literal numerico entero";
+                    funcion = "Representa un valor numerico entero escrito directamente en el codigo fuente.";
+                    break;
+
+                case DECIMAL:
+
+                    token = "DECIMAL";
+                    clasificacion = "Literal numerico decimal";
+                    funcion = "Representa un valor numerico con parte decimal escrito directamente en el codigo fuente.";
+                    break;
+
+                case CADENA:
+
+                    token = "CADENA";
+                    clasificacion = "Literal de cadena";
+                    funcion = "Representa una secuencia de caracteres delimitada por comillas.";
+                    break;
+
+                case COMENTARIO_LINEA:
+
+                    token = "COMENTARIO_LINEA";
+                    expresion = "// (hasta fin de linea)";
+                    clasificacion = "Comentario";
+                    funcion = "Comentario de una linea que no se ejecuta como instruccion.";
+                    break;
+
+                case COMENTARIO_BLOQUE:
+
+                    token = "COMENTARIO_BLOQUE";
+                    expresion = "/* ... */";
+                    clasificacion = "Comentario";
+                    funcion = "Comentario delimitado que puede abarcar varias lineas.";
+                    break;
+
+                default:
+
+                    token = TraductorConstants.tokenImage[t.kind];
+                    clasificacion = "Simbolo o elemento lexico";
+                    funcion = "Elemento reconocido por las reglas lexicas del lenguaje fuente.";
+                    break;
             }
         }
+
+        // ==================================================
+        // 4. MOSTRAR TODOS LOS TOKENS CON EL MISMO FORMATO
+        // ==================================================
+
+        System.out.println("----------------------");
+        System.out.println("Token: " + token);
+        System.out.println("Expresion Regular: " + expresion);
+        System.out.println("Lexema: " + lexema);
+        System.out.println("Lenguajes: " + lenguajes);
+        System.out.println("Clasificacion: " + clasificacion);
+        System.out.println("Funcion: " + funcion);
+        System.out.println("Estado: " + estado);
     }
 }
 
@@ -213,11 +310,15 @@ Nodo comentario() :
         t=<COMENTARIO_BLOQUE>
     )
     {
+        mostrarToken(t);
+
         n.valor = t.image;
+
         n.atributo(
             "lineaInicio",
             String.valueOf(t.beginLine)
         );
+
         return n;
     }
 }
