@@ -870,13 +870,14 @@ public class GeneradorPython {
 
         return "";
     }
-
+    
     /** Determina el tipo de una expresión para generar operaciones compatibles con Python. */
     private String inferirTipoExpr(Nodo n) {
         if (n == null) {
             return null;
         }
-        
+
+        // Conversiones de tipos.
         if ("conversionTipo".equals(n.tipo)) {
             String tipo = n.atributo("tipo");
 
@@ -884,27 +885,32 @@ public class GeneradorPython {
                 return "int";
             }
 
-            if ("double".equals(tipo)) {
-                return "decimal";
+            if ("double".equals(tipo) || "float".equals(tipo)) {
+                return "float";
             }
         }
-        
+
         // Literales e identificadores.
         if ("valor".equals(n.tipo)) {
             String tipoValor = n.atributo("tipoValor");
 
-            if ("cadena".equals(tipoValor)) {
+            if ("cadena".equals(tipoValor)
+                    || "caracter".equals(tipoValor)) {
                 return "cadena";
             }
+
             if ("true".equals(tipoValor) || "false".equals(tipoValor)) {
                 return "bool";
             }
+
             if ("null".equals(tipoValor)) {
                 return "null";
             }
+
             if ("decimal".equals(tipoValor)) {
-                return "decimal";
+                return "float";
             }
+
             if ("numero".equals(tipoValor)) {
                 return "int";
             }
@@ -916,13 +922,14 @@ public class GeneradorPython {
                 return normalizarTipo(tipoVariable);
             }
 
-            // Compatibilidad con nodos numéricos que no tengan tipoValor.
+            // Compatibilidad con nodos numéricos sin tipoValor.
             if (n.valor != null) {
                 if (n.valor.matches("\\d+")) {
                     return "int";
                 }
+
                 if (n.valor.matches("\\d+\\.\\d+")) {
-                    return "decimal";
+                    return "float";
                 }
             }
 
@@ -939,11 +946,14 @@ public class GeneradorPython {
             String tipoIzq = inferirTipoExpr(n.hijo(0));
             String tipoDer = inferirTipoExpr(n.hijo(1));
 
+            // Concatenación de cadenas.
             if ("+".equals(operador)
-                    && ("cadena".equals(tipoIzq) || "cadena".equals(tipoDer))) {
+                    && ("cadena".equals(tipoIzq)
+                    || "cadena".equals(tipoDer))) {
                 return "cadena";
             }
 
+            // Operaciones relacionales y lógicas.
             if ("&&".equals(operador) || "||".equals(operador)
                     || "==".equals(operador) || "!=".equals(operador)
                     || "<".equals(operador) || ">".equals(operador)
@@ -951,12 +961,15 @@ public class GeneradorPython {
                 return "bool";
             }
 
+            // Operaciones aritméticas.
             if ("+".equals(operador) || "-".equals(operador)
                     || "*".equals(operador) || "/".equals(operador)
                     || "%".equals(operador)) {
-                if ("decimal".equals(tipoIzq) || "decimal".equals(tipoDer)) {
-                    return "decimal";
+
+                if ("float".equals(tipoIzq) || "float".equals(tipoDer)) {
+                    return "float";
                 }
+
                 if ("int".equals(tipoIzq) && "int".equals(tipoDer)) {
                     return "int";
                 }
@@ -975,7 +988,7 @@ public class GeneradorPython {
         return switch (tipo.toLowerCase(Locale.ROOT)) {
             case "string", "cadena", "char" -> "cadena";
             case "int", "long", "short", "byte" -> "int";
-            case "double", "float", "decimal" -> "decimal";
+            case "double", "float" -> "float";
             case "bool", "boolean" -> "bool";
             default -> tipo;
         };
@@ -987,8 +1000,8 @@ public class GeneradorPython {
             case "true" -> "True";
             case "false" -> "False";
             case "null" -> "None";
-            case "cadena" -> normalizarCadena(v.valor);
-            default -> v.valor; // identificador, numero, decimal
+            case "cadena", "caracter" -> normalizarCadena(v.valor);
+            default -> v.valor;
         };
     }
 

@@ -44,8 +44,43 @@ public class Traductor {
             info = Diccionario.mapa.get("/* ... */");
 
         } else {
-
+            // Primero se intenta buscar por el lexema real.
             info = Diccionario.mapa.get(palabra);
+
+            // Si no existe, se busca mediante el nombre del tipo de token.
+            // Esto permite consultar entradas genéricas como <CARACTER>,
+            // <NUMERO>, <DECIMAL>, <CADENA> e <IDENTIFICADOR>.
+            if (info == null) {
+
+                String claveToken = null;
+
+                switch (t.kind) {
+
+                    case IDENTIFICADOR:
+                        claveToken = "<identificador>";
+                        break;
+
+                    case NUMERO:
+                        claveToken = "<numero>";
+                        break;
+
+                    case DECIMAL:
+                        claveToken = "<decimal>";
+                        break;
+
+                    case CARACTER:
+                        claveToken = "<caracter>";
+                        break;
+
+                    case CADENA:
+                        claveToken = "<cadena>";
+                        break;
+                }
+
+                if (claveToken != null) {
+                    info = Diccionario.mapa.get(claveToken);
+                }
+            }
         }
 
         // ==================================================
@@ -105,6 +140,13 @@ public class Traductor {
                     token = "CADENA";
                     clasificacion = "Literal de cadena";
                     funcion = "Representa una secuencia de caracteres delimitada por comillas.";
+                    break;
+
+                case CARACTER:
+
+                    token = "CARACTER";
+                    clasificacion = "Literal de caracter";
+                    funcion = "Representa un unico caracter delimitado por comillas simples; admite secuencias de escape.";
                     break;
 
                 case COMENTARIO_LINEA:
@@ -243,9 +285,11 @@ TOKEN : {
 }
 
 TOKEN : {
-    < DECIMAL: (["0"-"9"])+ "." (["0"-"9"])+ >
+    < DECIMAL: (["0"-"9"])+ "." (["0"-"9"])+ (["f","F","d","D"])? >
 |   < NUMERO: (["0"-"9"])+ >
-|   < CADENA: "\"" (~["\""])* "\"" | "\'" (~["\'"])* "\'" >
+|   < CARACTER: "'" (~["'", "\\", "\n", "\r"] | "\\" (["'", "\"", "\\", "0", "a", "b", "f", "n", "r", "t", "v"]
+              | "u" (["0"-"9", "a"-"f", "A"-"F"]){4} | "x" (["0"-"9", "a"-"f", "A"-"F"]){1,4})) "'">
+|   < CADENA: "\"" (~["\"", "\\", "\n", "\r"] | "\\" ["\"", "\\", "n", "r", "t", "0"])* "\"" >
 |   < IDENTIFICADOR: (["a"-"z","A"-"Z"]) (["a"-"z","A"-"Z","0"-"9"])* >
 }
 
@@ -1827,7 +1871,6 @@ String operadorAritmetico() :
     | t=<MOD>   { mostrarToken(t); return "%"; }
 }
 
-
 Nodo valor() :
 {
     Token t;
@@ -1835,19 +1878,19 @@ Nodo valor() :
     Nodo indice;
 }
 {
-    t=<IDENTIFICADOR>
+    t = <IDENTIFICADOR>
     {
         mostrarToken(t);
         n = new Nodo("valor", t.image);
         n.atributo("tipoValor", "identificador");
     }
     [
-        t=<CORCHETE_IZQ>
+        t = <CORCHETE_IZQ>
         {
             mostrarToken(t);
         }
-        indice=expresion()
-        t=<CORCHETE_DER>
+        indice = expresion()
+        t = <CORCHETE_DER>
         {
             mostrarToken(t);
         }
@@ -1859,11 +1902,11 @@ Nodo valor() :
 
         |
 
-        t=<PUNTO>
+        t = <PUNTO>
         {
             mostrarToken(t);
         }
-        t=<IDENTIFICADOR>
+        t = <IDENTIFICADOR>
         {
             mostrarToken(t);
 
@@ -1885,51 +1928,76 @@ Nodo valor() :
         return n;
     }
 
-    | t=<NUMERO>
-      {
-          mostrarToken(t);
-          n = new Nodo("valor", t.image);
-          n.atributo("tipoValor", "numero");
-          return n;
-      }
+    |
 
-    | t=<DECIMAL>
-      {
-          mostrarToken(t);
-          n = new Nodo("valor", t.image);
-          n.atributo("tipoValor", "decimal");
-          return n;
-      }
+    t = <NUMERO>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "numero");
+        return n;
+    }
 
-    | t=<CADENA>
-      {
-          mostrarToken(t);
-          n = new Nodo("valor", t.image);
-          n.atributo("tipoValor", "cadena");
-          return n;
-      }
+    |
 
-    | t=<TRUE>
-      {
-          mostrarToken(t);
-          n = new Nodo("valor", t.image);
-          n.atributo("tipoValor", "true");
-          return n;
-      }
+    t = <DECIMAL>
+    {
+        mostrarToken(t);
 
-    | t=<FALSE>
-      {
-          mostrarToken(t);
-          n = new Nodo("valor", t.image);
-          n.atributo("tipoValor", "false");
-          return n;
-      }
+        String numero = t.image.replaceAll("[fFdD]$", "");
 
-    | t=<NULL>
-      {
-          mostrarToken(t);
-          n = new Nodo("valor", t.image);
-          n.atributo("tipoValor", "null");
-          return n;
-      }
+        n = new Nodo("valor", numero);
+        n.atributo("tipoValor", "decimal");
+        return n;
+    }
+
+    |
+
+    t = <CARACTER>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "caracter");
+        return n;
+    }
+
+    |
+
+    t = <CADENA>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "cadena");
+        return n;
+    }
+
+    |
+
+    t = <TRUE>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "true");
+        return n;
+    }
+
+    |
+
+    t = <FALSE>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "false");
+        return n;
+    }
+
+    |
+
+    t = <NULL>
+    {
+        mostrarToken(t);
+        n = new Nodo("valor", t.image);
+        n.atributo("tipoValor", "null");
+        return n;
+    }
 }

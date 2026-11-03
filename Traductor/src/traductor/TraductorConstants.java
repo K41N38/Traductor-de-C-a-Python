@@ -167,9 +167,11 @@ public interface TraductorConstants {
   /** RegularExpression Id. */
   int NUMERO = 82;
   /** RegularExpression Id. */
-  int CADENA = 83;
+  int CARACTER = 83;
   /** RegularExpression Id. */
-  int IDENTIFICADOR = 84;
+  int CADENA = 84;
+  /** RegularExpression Id. */
+  int IDENTIFICADOR = 85;
 
   /** Lexical state. */
   int DEFAULT = 0;
@@ -259,6 +261,7 @@ public interface TraductorConstants {
     "\".\"",
     "<DECIMAL>",
     "<NUMERO>",
+    "<CARACTER>",
     "<CADENA>",
     "<IDENTIFICADOR>",
   };

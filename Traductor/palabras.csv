@@ -1,96 +1,162 @@
-lexema,token,expresion,lenguaje,clasificacion,funcion,estado
-if,IF,if,C#,Control_condicional,Evalúa una condición y ejecuta un bloque cuando es verdadera,Implementado
-else,ELSE,else,C#,Control_condicional,Define el bloque alternativo de una condición,Implementado
-try,TRY,try,C#,Excepciones,Inicia un bloque protegido para manejo de excepciones,Implementado
-catch,CATCH,catch,C#,Excepciones,Captura una excepción producida en un bloque try,Implementado
-finally,FINALLY,finally,C#,Excepciones,Define un bloque que se ejecuta al finalizar el manejo de excepciones,Implementado
-throw,THROW,throw,C#,Excepciones,Lanza una excepción; la gramática también admite throw sin expresión,Implementado
-while,WHILE,while,C#,Bucle_condicional,Repite un bloque mientras la condición sea verdadera,Implementado
-for,FOR,for,C#,Bucle_controlado,"Ejecuta un ciclo con inicialización, condición y actualización",Implementado
-do,DO,do,C#,Bucle_postcondicional,Ejecuta el bloque al menos una vez y después evalúa la condición,Implementado
-break,BREAK,break,C#,Control_de_bucle,Termina el ciclo o estructura de selección actual,Implementado
-continue,CONTINUE,continue,C#,Control_de_bucle,Pasa a la siguiente iteración del ciclo,Implementado
-return,RETURN,return,C#,Retorno,Termina una función y opcionalmente devuelve una expresión,Implementado
-switch,SWITCH,switch,C#,Seleccion_multiple,Selecciona la ejecución según el valor de una expresión,Implementado
-case,CASE,case,C#,Seleccion_multiple,Define una alternativa dentro de switch,Implementado
-default,DEFAULT_KW,default,C#,Seleccion_multiple,Define la alternativa predeterminada de switch,Implementado
-foreach,FOREACH,foreach,C#,Bucle_de_iteracion,"Recorre los elementos de una colección; la gramática admite tipos int, string, bool y boolean",Implementado
-in,IN,in,C#,Iteracion,Separa la variable de iteración de la colección en foreach,Implementado
-true,TRUE,true,C#,Literal_booleano,Representa el valor lógico verdadero,Implementado
-false,FALSE,false,C#,Literal_booleano,Representa el valor lógico falso,Implementado
-null,NULL,null,C#,Literal_nulo,Representa una referencia nula,Implementado
-new,NEW,new,C#,Creacion,Se utiliza en la gramática para crear arreglos y excepciones,Implementado
-const,CONST,const,C#,Modificador_de_variable,Declara una variable constante; la gramática permite usarlo en declaraciones y en la inicialización de for,Implementado
-static,STATIC,static,C#,Modificador_de_funcion,Permite marcar una declaración de función como static,Implementado
-public,PUBLIC,public,C#,Modificador_de_acceso,"Token definido, pero actualmente no está integrado en las producciones de declaración",Reconocido léxicamente
-private,PRIVATE,private,C#,Modificador_de_acceso,"Token definido, pero actualmente no está integrado en las producciones de declaración",Reconocido léxicamente
-print,PRINT,print,No es instrucción admitida,Token_reservado_no_admitido,Token reservado para impedir que print sea interpretado como identificador; no existe una producción que lo acepte como instrucción,Reconocido léxicamente
-println,PRINTLN,println,No es instrucción admitida,Token_reservado_no_admitido,Token reservado para impedir que println sea interpretado como identificador; no existe una producción que lo acepte como instrucción,Reconocido léxicamente
-int,INT,int,C#,Tipo_de_dato,"Tipo entero; también se utiliza en parámetros, foreach, conversiones y arreglos",Implementado
-bool,BOOL,bool,C#,Tipo_de_dato,Tipo booleano de C#,Implementado
-boolean,BOOLEAN,boolean,Extensión aceptada por la gramática,Tipo_de_dato,Alias adicional aceptado por la gramática para valores booleanos; no es el nombre del tipo booleano de C#,Implementado
-string,STRING,string,C#,Tipo_de_dato,Tipo de cadena de texto,Implementado
-char,CHAR,char,C#,Tipo_de_dato,Tipo de carácter,Implementado
-double,DOUBLE,double,C#,Tipo_de_dato,Tipo numérico de punto flotante de doble precisión,Implementado
-float,FLOAT,float,C#,Tipo_de_dato,Tipo numérico de punto flotante de precisión simple,Implementado
-long,LONG,long,C#,Tipo_de_dato,Tipo entero de 64 bits,Implementado
-short,SHORT,short,C#,Tipo_de_dato,Tipo entero de 16 bits,Implementado
-byte,BYTE,byte,C#,Tipo_de_dato,Tipo entero sin signo de 8 bits,Implementado
-void,VOID,void,C#,Tipo_de_retorno,Indica que una función no devuelve un valor,Implementado
-Console,CONSOLE,Console,C#,Consola,Clase utilizada para operaciones de entrada y salida en consola,Implementado
-WriteLine,WRITELINE,WriteLine,C#,Salida_de_consola,Escribe una expresión en la consola y agrega un salto de línea,Implementado
-ReadLine,READLINE,ReadLine,C#,Entrada_de_consola,Lee una línea desde la consola; se admite como instrucción y expresión,Implementado
-ReadKey,READKEY,ReadKey,C#,Entrada_de_consola,Lee una tecla; la gramática actual lo admite como instrucción,Implementado
-// ...,COMENTARIO_LINEA,// (hasta fin de línea),C#,Comentario,Comentario de una línea,Implementado
-/* ... */,COMENTARIO_BLOQUE,/* ... */,C#,Comentario,Comentario delimitado por /* y */,Implementado
-<=,MENOR_IGUAL,<=,C#,Operador_relacional,Comprueba si el operando izquierdo es menor o igual que el derecho,Implementado
->=,MAYOR_IGUAL,>=,C#,Operador_relacional,Comprueba si el operando izquierdo es mayor o igual que el derecho,Implementado
-==,IGUALDAD,==,C#,Operador_relacional,Comprueba si dos valores son iguales,Implementado
-!=,DIFERENTE,!=,C#,Operador_relacional,Comprueba si dos valores son diferentes,Implementado
-<,MENOR,<,C#,Operador_relacional,Comprueba si el operando izquierdo es menor que el derecho,Implementado
->,MAYOR,>,C#,Operador_relacional,Comprueba si el operando izquierdo es mayor que el derecho,Implementado
-+=,SUMA_ASIGNACION,+=,C#,Asignacion_compuesta,Suma un valor a una variable y guarda el resultado,Implementado
--=,RESTA_ASIGNACION,-=,C#,Asignacion_compuesta,Resta un valor a una variable y guarda el resultado,Implementado
-*=,MULT_ASIGNACION,*=,C#,Asignacion_compuesta,Multiplica una variable por un valor y guarda el resultado,Implementado
-/=,DIV_ASIGNACION,/=,C#,Asignacion_compuesta,Divide una variable entre un valor y guarda el resultado,Implementado
-%=,MOD_ASIGNACION,%=,C#,Asignacion_compuesta,Guarda el residuo de una división,Implementado
-+,SUMA,+,C#,Operador_aritmetico,Suma dos expresiones,Implementado
--,RESTA,-,C#,Operador_aritmetico,Resta dos expresiones y también se admite como operador unario negativo,Implementado
-*,MULT,*,C#,Operador_aritmetico,Multiplica dos expresiones,Implementado
-/,DIV,/,C#,Operador_aritmetico,Divide dos expresiones,Implementado
-%,MOD,%,C#,Operador_aritmetico,Obtiene el residuo de una división,Implementado
-=,ASIGNACION,=,C#,Asignacion,Asigna el resultado de una expresión a una variable,Implementado
-++,INCREMENTO,++,C#,Incremento,Incrementa una variable en una unidad,Implementado
---,DECREMENTO,--,C#,Decremento,Decrementa una variable en una unidad,Implementado
-&&,AND_LOGICO,&&,C#,Operador_logico,Devuelve verdadero cuando ambas condiciones son verdaderas,Implementado
-||,OR_LOGICO,||,C#,Operador_logico,Devuelve verdadero cuando al menos una condición es verdadera,Implementado
-!,NOT_LOGICO,!,C#,Operador_logico,Niega una condición lógica,Implementado
-(,PARENTESIS_IZQ,(,C#,Delimitador,"Abre una lista de parámetros, argumentos o una expresión agrupada",Implementado
-),PARENTESIS_DER,),C#,Delimitador,"Cierra una lista de parámetros, argumentos o una expresión agrupada",Implementado
-{,LLAVE_IZQ,{,C#,Delimitador,Abre un bloque de código o un inicializador de arreglo,Implementado
-},LLAVE_DER,},C#,Delimitador,Cierra un bloque de código o un inicializador de arreglo,Implementado
-[,CORCHETE_IZQ,[,C#,Delimitador,"Abre un tipo de arreglo, acceso por índice o dimensión de arreglo",Implementado
-],CORCHETE_DER,],C#,Delimitador,"Cierra un tipo de arreglo, acceso por índice o dimensión de arreglo",Implementado
-;,PUNTO_Y_COMA,;,C#,Delimitador,Termina declaraciones e instrucciones,Implementado
-:,DOS_PUNTOS,:,C#,Delimitador,Separa etiquetas case y default de sus instrucciones,Implementado
-",",COMA,",",C#,Delimitador,"Separa variables, parámetros y argumentos",Implementado
-.,PUNTO,.,C#,Acceso_a_miembro,"Separa nombres de clases, métodos y propiedades",Implementado
-<NUMERO>,NUMERO,[0-9]+,C#,Literal_entero,Reconoce una secuencia de uno o más dígitos,Implementado
-<DECIMAL>,DECIMAL,[0-9]+\.[0-9]+,C#,Literal_decimal,"Reconoce dígitos, punto decimal y más dígitos; no admite exponente",Implementado
-<CADENA>,CADENA,"""..."" o '...'",C#,Literal_cadena,Reconoce texto entre comillas dobles o simples; la regla actual no contempla secuencias de escape,Implementado
-<IDENTIFICADOR>,IDENTIFICADOR,[A-Za-z][A-Za-z0-9]*,C#,Identificador,Reconoce nombres que comienzan con una letra y continúan con letras o dígitos; no admite guion bajo,Implementado
-Parse,IDENTIFICADOR (validación semántica de imagen),Parse,C#,Conversion,Se admite en int.Parse(...) y double.Parse(...),Implementado
-Convert,IDENTIFICADOR (validación semántica de imagen),Convert,C#,Conversion,Se admite Convert.ToInt32(...) y Convert.ToDouble(...),Implementado
-ToInt32,IDENTIFICADOR (validación semántica de imagen),ToInt32,C#,Conversion,Método admitido dentro de Convert.ToInt32(...),Implementado
-ToDouble,IDENTIFICADOR (validación semántica de imagen),ToDouble,C#,Conversion,Método admitido dentro de Convert.ToDouble(...),Implementado
-Array,IDENTIFICADOR (validación semántica de imagen),Array,C#,Operaciones_de_arreglo,"Nombre admitido para Array.Sort, Array.Reverse, Array.IndexOf y Array.Copy",Implementado
-Sort,IDENTIFICADOR (validación semántica de imagen),Sort,C#,Operaciones_de_arreglo,Método admitido en Array.Sort(...),Implementado
-Reverse,IDENTIFICADOR (validación semántica de imagen),Reverse,C#,Operaciones_de_arreglo,Método admitido en Array.Reverse(...),Implementado
-IndexOf,IDENTIFICADOR (validación semántica de imagen),IndexOf,C#,Operaciones_de_arreglo,Método admitido en Array.IndexOf(...),Implementado
-Copy,IDENTIFICADOR (validación semántica de imagen),Copy,C#,Operaciones_de_arreglo,Método admitido en Array.Copy(...),Implementado
-Length,IDENTIFICADOR (validación semántica de imagen),Length,C#,Propiedad_de_arreglo,Propiedad admitida para consultar la longitud de un arreglo o expresión agrupada,Implementado
-Message,IDENTIFICADOR (validación semántica de imagen),Message,C#,Propiedad_de_excepcion,Propiedad admitida para consultar el mensaje de una excepción,Implementado
-decimal,—,decimal,C#,Tipo_de_dato,Tipo decimal de C# aún no incluido en los tokens ni en las producciones de declaración,Previsto
-using,—,using,C#,Importacion,Directiva using aún no reconocida por la gramática,Previsto
-namespace,—,namespace,C#,Organizacion_de_codigo,Declaración de espacios de nombres aún no reconocida por la gramática,Previsto
-class,—,class,C#,Programacion_orientada_a_objetos,Declaración de clases fuera del alcance actual de la gramática,Previsto
+﻿lexema,token,expresion,lenguajes,clasificacion,funcion,estado
+if,IF,if,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Control_condicional,Evalúa una condición y ejecuta un bloque cuando es verdadera,Implementado
+else,ELSE,else,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Control_condicional,Define el bloque alternativo de una condición,Implementado
+elif,ELIF,elif,Python,Control_condicional,Condición alternativa; en C# suele expresarse como else if,Previsto
+try,TRY,try,"C#, Python, Java, JavaScript, PHP, C++",Excepciones,Inicia un bloque protegido para manejar excepciones,Implementado
+catch,CATCH,catch,"C#, Java, JavaScript, PHP",Excepciones,Captura una excepción; Python utiliza except,Implementado
+except,EXCEPT,except,Python,Excepciones,Captura una excepción en Python,Previsto
+finally,FINALLY,finally,"C#, Python, Java, JavaScript, PHP",Excepciones,Define un bloque que se ejecuta al finalizar el manejo de excepciones,Implementado
+throw,THROW,throw,"C#, Java, JavaScript, PHP",Excepciones,Lanza una excepción; Python utiliza raise,Implementado
+raise,RAISE,raise,Python,Excepciones,Lanza una excepción en Python,Previsto
+while,WHILE,while,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Bucle_condicional,Repite un bloque mientras la condición sea verdadera,Implementado
+for,FOR,for,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Bucle_controlado,"Ejecuta un ciclo controlado por una variable, condición o secuencia",Implementado
+do,DO,do,"C#, Java, C, C++, JavaScript, PHP",Bucle_postcondicional,Inicia un ciclo que evalúa su condición después del bloque,Implementado
+break,BREAK,break,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Control_de_bucle,Termina el ciclo o selección actual,Implementado
+continue,CONTINUE,continue,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Control_de_bucle,Pasa a la siguiente iteración,Implementado
+return,RETURN,return,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Retorno,Termina una función y opcionalmente devuelve una expresión,Implementado
+switch,SWITCH,switch,"C#, Java, C, C++, JavaScript, PHP",Seleccion_multiple,Selecciona la ejecución según una expresión,Implementado
+case,CASE,case,"C#, Java, C, C++, JavaScript, PHP",Seleccion_multiple,Define una alternativa dentro de switch,Implementado
+default,DEFAULT_KW,default,"C#, Java, C, C++, JavaScript, PHP",Seleccion_multiple,Define la alternativa predeterminada de switch,Implementado
+foreach,FOREACH,foreach,"C#, PHP, PowerShell",Bucle_de_iteracion,Recorre los elementos de una colección; Python usa for sobre secuencias,Implementado
+in,IN,in,"C#, Python, JavaScript, PHP, Ruby",Iteracion_y_pertenencia,Separa variable y colección o comprueba pertenencia según el lenguaje,Implementado
+yield,YIELD,yield,"C#, Python, JavaScript, Java",Generadores,Produce un valor desde un iterador o generador,Previsto
+async,ASYNC,async,"C#, Python, JavaScript, Java",Asincronia,Declara una función o contexto asíncrono,Previsto
+await,AWAIT,await,"C#, Python, JavaScript",Asincronia,Espera una operación asíncrona,Previsto
+true,TRUE,true,"C#, Java, C, C++, JavaScript, PHP, Go, Rust",Literal_booleano,Representa el valor lógico verdadero,Implementado
+false,FALSE,false,"C#, Java, C, C++, JavaScript, PHP, Go, Rust",Literal_booleano,Representa el valor lógico falso,Implementado
+null,NULL,null,"C#, Java, JavaScript, PHP, SQL",Literal_nulo,Representa ausencia de referencia o valor; Python utiliza None,Implementado
+None,NONE,None,Python,Literal_nulo,Representa ausencia de valor en Python,Previsto
+new,NEW,new,"C#, Java, C++, JavaScript, PHP",Creacion,Crea una instancia de objeto o arreglo,Implementado
+const,CONST,const,"C#, JavaScript, C++, PHP, Go",Modificador_de_variable,Declara una constante o referencia no reasignable según el lenguaje,Implementado
+static,STATIC,static,"C#, Java, C, C++, PHP",Modificador,Declara miembros o elementos estáticos,Implementado
+public,PUBLIC,public,"C#, Java, C++, PHP",Modificador_de_acceso,Declara un miembro con acceso público,Reconocido léxicamente
+private,PRIVATE,private,"C#, Java, C++, PHP",Modificador_de_acceso,Declara un miembro con acceso privado,Reconocido léxicamente
+protected,PROTECTED,protected,"C#, Java, C++, PHP",Modificador_de_acceso,Restringe el acceso a la clase y sus derivados,Previsto
+internal,INTERNAL,internal,C#,Modificador_de_acceso,Restringe el acceso al mismo ensamblado,Previsto
+print,PRINT,print,"Python, Ruby, PHP (con diferencias)",Salida_de_consola,Token reservado no admitido actualmente como instrucción,Reconocido léxicamente
+println,PRINTLN,println,"Java, Kotlin, Scala",Salida_de_consola,Imprime texto seguido de salto de línea; token reservado no admitido actualmente,Reconocido léxicamente
+int,INT,int,"C#, Python, Java, C, C++, JavaScript (Number), PHP, Go",Tipo_de_dato,Representa números enteros; rango y tamaño dependen del lenguaje,Implementado
+bool,BOOL,bool,"C#, Python, C, C++, Go",Tipo_de_dato,Representa valores booleanos,Implementado
+boolean,BOOLEAN,boolean,"Java, JavaScript, Kotlin; alias aceptado por esta gramática",Tipo_de_dato,Representa valores booleanos; aquí también se acepta como alias,Implementado
+string,STRING,string,"C#, Python (str), Java (String), JavaScript, PHP",Tipo_de_dato,Representa cadenas de texto,Implementado
+char,CHAR,char,"C#, Java, C, C++, Kotlin",Tipo_de_dato,Representa un carácter; Python usa cadenas de longitud uno,Implementado
+double,DOUBLE,double,"C#, Java, C, C++, PHP",Tipo_de_dato,Número de punto flotante de doble precisión,Implementado
+float,FLOAT,float,"C#, Java, C, C++, Python",Tipo_de_dato,Número de punto flotante; float de Python suele ser doble precisión,Implementado
+long,LONG,long,"C#, Java, C, C++, Go",Tipo_de_dato,Entero de mayor capacidad; rango depende del lenguaje,Implementado
+short,SHORT,short,"C#, Java, C, C++",Tipo_de_dato,Entero de rango reducido en lenguajes que distinguen este tipo,Implementado
+byte,BYTE,byte,"C#, Java, C, C++, Python (bytes), Go (uint8)",Tipo_de_dato,Entero pequeño o dato de 8 bits según el lenguaje,Implementado
+decimal,DECIMAL,decimal,"C#, SQL, Python (decimal.Decimal), Java (BigDecimal)",Tipo_de_dato,Tipo decimal de precisión fija o alta; no se implementará en esta versión,Previsto
+void,VOID,void,"C#, Java, C, C++",Tipo_de_retorno,Indica que una función no devuelve un valor,Implementado
+object,OBJECT,object,"C#, Java, Python, JavaScript",Tipo_de_dato,Representa un objeto o valor general según el lenguaje,Previsto
+var,VAR,var,"C#, JavaScript, Java, Kotlin, Go",Inferencia_de_tipo,Permite inferir el tipo o declarar variables según el lenguaje,Previsto
+dynamic,DYNAMIC,dynamic,C#,Tipo_de_dato,Permite resolver operaciones y miembros dinámicamente,Previsto
+Console,CONSOLE,Console,C#,Consola,Clase de .NET para entrada y salida en consola,Implementado
+WriteLine,WRITELINE,WriteLine,C#,Salida_de_consola,Escribe en consola y agrega salto de línea,Implementado
+Write,WRITE,Write,C#,Salida_de_consola,Escribe en consola sin agregar necesariamente salto de línea,Previsto
+ReadLine,READLINE,ReadLine,C#,Entrada_de_consola,Lee una línea desde la consola,Implementado
+ReadKey,READKEY,ReadKey,C#,Entrada_de_consola,Lee una tecla desde la consola,Implementado
+// ...,COMENTARIO_LINEA,// (hasta fin de línea),"C#, Java, C, C++, JavaScript, PHP, Go, Rust; Python usa #",Comentario,Comentario de una línea; el delimitador varía por lenguaje,Implementado
+/* ... */,COMENTARIO_BLOQUE,/* ... */,"C#, Java, C, C++, JavaScript, PHP, Go, Rust",Comentario,Comentario de bloque delimitado por apertura y cierre,Implementado
+<NUMERO>,NUMERO,[0-9]+,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Literal_entero,Reconoce una secuencia de dígitos enteros,Implementado
+<DECIMAL>,DECIMAL,[0-9]+\.[0-9]+,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Literal_decimal,Reconoce parte entera y fraccionaria; la regla actual no admite exponente,Implementado
+<CADENA>,CADENA,"""...""","C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Literal_cadena,Reconoce texto entre comillas; revisar secuencias de escape,Implementado
+<CARACTER>,CARACTER,'x',"C#, Java, C, C++, Kotlin",Literal_caracter,Representa un carácter; Python lo representa como cadena de longitud uno,Implementado
+<IDENTIFICADOR>,IDENTIFICADOR,[A-Za-z][A-Za-z0-9]*,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Identificador,Reconoce nombres que comienzan con letra y continúan con letras o dígitos; no admite guion bajo,Implementado
+Parse,IDENTIFICADOR (validación semántica),Parse,C#,Conversion,Método de tipos como int.Parse y double.Parse para convertir cadenas,Implementado
+Convert,IDENTIFICADOR (validación semántica),Convert,C#,Conversion,Clase que proporciona conversiones mediante métodos ToX,Implementado
+ToInt32,IDENTIFICADOR (validación semántica),ToInt32,C#,Conversion,Convierte un valor a entero de 32 bits,Implementado
+ToDouble,IDENTIFICADOR (validación semántica),ToDouble,C#,Conversion,Convierte un valor a double,Implementado
+ToBoolean,IDENTIFICADOR (validación semántica),ToBoolean,C#,Conversion,Convierte un valor a booleano,Previsto
+ToString,IDENTIFICADOR (validación semántica),ToString,"C#, Java, Python (str), JavaScript",Conversion,Obtiene una representación textual de un valor,Previsto
+ToInt64,IDENTIFICADOR (validación semántica),ToInt64,C#,Conversion,Convierte un valor a entero de 64 bits,Previsto
+ToSingle,IDENTIFICADOR (validación semántica),ToSingle,C#,Conversion,Convierte un valor a float de precisión simple,Previsto
+ToDecimal,IDENTIFICADOR (validación semántica),ToDecimal,C#,Conversion,Convierte un valor a decimal; fuera del alcance de esta versión,Previsto
+Array,IDENTIFICADOR (validación semántica),Array,C#,Operaciones_de_arreglo,Clase para operaciones estáticas sobre arreglos,Implementado
+Sort,IDENTIFICADOR (validación semántica),Sort,C#,Operaciones_de_arreglo,Ordena elementos mediante Array.Sort,Implementado
+Reverse,IDENTIFICADOR (validación semántica),Reverse,C#,Operaciones_de_arreglo,Invierte elementos mediante Array.Reverse,Implementado
+IndexOf,IDENTIFICADOR (validación semántica),IndexOf,C#,Operaciones_de_arreglo,Busca un elemento y devuelve su índice o -1,Implementado
+Copy,IDENTIFICADOR (validación semántica),Copy,C#,Operaciones_de_arreglo,Copia elementos de un arreglo a otro,Implementado
+Length,IDENTIFICADOR (validación semántica),Length,"C#, Java (arrays), JavaScript (length), Python (len)",Propiedad_de_longitud,Consulta la longitud; la sintaxis varía por lenguaje,Implementado
+Message,IDENTIFICADOR (validación semántica),Message,C#,Propiedad_de_excepcion,Consulta el mensaje de una excepción,Implementado
+List,IDENTIFICADOR (validación semántica),List,"C# (List<T>), Java (List), Python (list)",Coleccion,Representa una colección ordenada,Previsto
+Add,IDENTIFICADOR (validación semántica),Add,"C#, Java; Python usa append en listas",Coleccion,Agrega un elemento a una colección,Previsto
+Remove,IDENTIFICADOR (validación semántica),Remove,"C#, Java; Python tiene métodos equivalentes",Coleccion,Elimina un elemento de una colección,Previsto
+Count,IDENTIFICADOR (validación semántica),Count,"C# (colecciones), SQL, Python (método)",Propiedad_de_conteo,Obtiene el número de elementos; sintaxis variable,Previsto
+<=,MENOR_IGUAL,<=,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_relacional,Comprueba si el operando izquierdo es menor o igual,Implementado
+>=,MAYOR_IGUAL,>=,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_relacional,Comprueba si el operando izquierdo es mayor o igual,Implementado
+==,IGUALDAD,==,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_relacional,Comprueba igualdad según las reglas del lenguaje,Implementado
+!=,DIFERENTE,!=,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_relacional,Comprueba desigualdad,Implementado
+<,MENOR,<,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_relacional,Comprueba si el operando izquierdo es menor,Implementado
+>,MAYOR,>,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_relacional,Comprueba si el operando izquierdo es mayor,Implementado
++=,SUMA_ASIGNACION,+=,"C#, Python, Java, C, C++, JavaScript, PHP",Asignacion_compuesta,Suma y guarda el resultado,Implementado
+-=,RESTA_ASIGNACION,-=,"C#, Python, Java, C, C++, JavaScript, PHP",Asignacion_compuesta,Resta y guarda el resultado,Implementado
+*=,MULT_ASIGNACION,*=,"C#, Python, Java, C, C++, JavaScript, PHP",Asignacion_compuesta,Multiplica y guarda el resultado,Implementado
+/=,DIV_ASIGNACION,/=,"C#, Python, Java, C, C++, JavaScript, PHP",Asignacion_compuesta,Divide y guarda el resultado,Implementado
+%=,MOD_ASIGNACION,%=,"C#, Python, Java, C, C++, JavaScript, PHP",Asignacion_compuesta,Calcula y guarda el residuo,Implementado
++,SUMA,+,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_aritmetico,Suma valores y puede concatenar cadenas,Implementado
+-,RESTA,-,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_aritmetico,Resta valores o funciona como negación unaria,Implementado
+*,MULT,*,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_aritmetico,Multiplica valores,Implementado
+/,DIV,/,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_aritmetico,Divide valores; resultado depende de tipos y reglas del lenguaje,Implementado
+%,MOD,%,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Operador_aritmetico,Obtiene el residuo; comportamiento con negativos puede variar,Implementado
+=,ASIGNACION,=,"C#, Python, Java, C, C++, JavaScript, PHP, Go, Rust",Asignacion,Asigna una expresión a una variable,Implementado
+++,INCREMENTO,++,"C#, Java, C, C++, JavaScript, PHP",Incremento,Incrementa una variable; Python no tiene este operador,Implementado
+--,DECREMENTO,--,"C#, Java, C, C++, JavaScript, PHP",Decremento,Decrementa una variable; Python no tiene este operador,Implementado
+&&,AND_LOGICO,&&,"C#, Java, C, C++, JavaScript, PHP",Operador_logico,AND lógico; Python utiliza and,Implementado
+||,OR_LOGICO,||,"C#, Java, C, C++, JavaScript, PHP",Operador_logico,OR lógico; Python utiliza or,Implementado
+!,NOT_LOGICO,!,"C#, Java, C, C++, JavaScript, PHP",Operador_logico,NOT lógico; Python utiliza not,Implementado
+&,AND_BITWISE,&,"C#, Python, Java, C, C++, JavaScript, PHP",Operador_bit_a_bit,AND a nivel de bits,Previsto
+|,OR_BITWISE,|,"C#, Python, Java, C, C++, JavaScript, PHP",Operador_bit_a_bit,OR a nivel de bits,Previsto
+^,XOR_BITWISE,^,"C#, Python, Java, C, C++, JavaScript, PHP",Operador_bit_a_bit,XOR a nivel de bits,Previsto
+~,NOT_BITWISE,~,"C#, Python, Java, C, C++, JavaScript, PHP",Operador_bit_a_bit,Complemento a nivel de bits,Previsto
+<<,SHIFT_IZQ,<<,"C#, Python, Java, C, C++, JavaScript, PHP",Desplazamiento_bits,Desplaza bits a la izquierda,Previsto
+>>,SHIFT_DER,>>,"C#, Python, Java, C, C++, JavaScript, PHP",Desplazamiento_bits,Desplaza bits a la derecha,Previsto
+??,COALESCENCIA_NULA,??,"C#, JavaScript, PHP",Operador_nulo,Usa el valor alternativo cuando el primero es nulo,Previsto
+?.,ACCESO_CONDICIONAL,?.,"C#, JavaScript, Kotlin",Acceso_condicional,Accede a un miembro solo si la referencia no es nula,Previsto
+(,PARENTESIS_IZQ,(,"C#, Python, Java, C, C++, JavaScript, PHP",Delimitador,"Abre parámetros, argumentos o expresión agrupada",Implementado
+),PARENTESIS_DER,),"C#, Python, Java, C, C++, JavaScript, PHP",Delimitador,"Cierra parámetros, argumentos o expresión agrupada",Implementado
+{,LLAVE_IZQ,{,"C#, Java, C, C++, JavaScript, PHP",Delimitador,Abre un bloque; Python utiliza indentación,Implementado
+},LLAVE_DER,},"C#, Java, C, C++, JavaScript, PHP",Delimitador,Cierra un bloque; Python utiliza indentación,Implementado
+[,CORCHETE_IZQ,[,"C#, Python, Java, C, C++, JavaScript, PHP",Delimitador,"Abre un arreglo, lista o acceso por índice",Implementado
+],CORCHETE_DER,],"C#, Python, Java, C, C++, JavaScript, PHP",Delimitador,"Cierra un arreglo, lista o acceso por índice",Implementado
+;,PUNTO_Y_COMA,;,"C#, Java, C, C++, JavaScript, PHP",Delimitador,Termina instrucciones; Python normalmente no lo requiere,Implementado
+:,DOS_PUNTOS,:,"C#, Python, Java, C, C++, JavaScript, PHP",Delimitador,Separa etiquetas o inicia bloques en Python,Implementado
+",",COMA,",","C#, Python, Java, C, C++, JavaScript, PHP",Delimitador,"Separa variables, parámetros y argumentos",Implementado
+.,PUNTO,.,"C#, Python, Java, C, C++, JavaScript, PHP",Acceso_a_miembro,"Separa clases, métodos, propiedades y módulos",Implementado
+using,USING,using,C#,Importacion,Importa espacios de nombres o declara recursos,Previsto
+import,IMPORT,import,"Python, Java, C++, JavaScript, PHP",Importacion,"Importa módulos, paquetes o bibliotecas",Previsto
+from,FROM,from,Python,Importacion,Indica el módulo desde el que se importa,Previsto
+namespace,NAMESPACE,namespace,C#,Organizacion_de_codigo,Declara un espacio de nombres,Previsto
+class,CLASS,class,"C#, Python, Java, C++, JavaScript, PHP",Programacion_orientada_a_objetos,Declara una clase,Previsto
+interface,INTERFACE,interface,"C#, Java, TypeScript, PHP",Programacion_orientada_a_objetos,Declara un contrato que implementan las clases,Previsto
+struct,STRUCT,struct,"C#, C, C++, Go",Tipo_compuesto,Declara un tipo compuesto por campos,Previsto
+enum,ENUM,enum,"C#, Java, C, C++, Python",Tipo_enumerado,Define un conjunto de constantes con nombre,Previsto
+this,THIS,this,"C#, Java, C++, JavaScript, PHP",Referencia_de_instancia,Referencia a la instancia actual; Python suele utilizar self,Previsto
+base,BASE,base,C#,Herencia,Accede a miembros de la clase base,Previsto
+extends,EXTENDS,extends,"Java, PHP, JavaScript",Herencia,Indica herencia de una clase,Previsto
+implements,IMPLEMENTS,implements,"Java, PHP",Herencia_e_interfaces,Indica implementación de una interfaz,Previsto
+abstract,ABSTRACT,abstract,"C#, Java, PHP",Modificador,Declara clases o miembros abstractos,Previsto
+virtual,VIRTUAL,virtual,"C#, C++",Modificador,Permite redefinir un método en una clase derivada,Previsto
+override,OVERRIDE,override,"C#, Kotlin; Java usa anotación @Override",Modificador,Indica que un miembro redefine uno heredado,Previsto
+function,FUNCTION,function,"JavaScript, PHP",Declaracion_de_funcion,Declara una función; otros lenguajes usan def o func,Previsto
+def,DEF,def,Python,Declaracion_de_funcion,Declara una función en Python,Previsto
+lambda,LAMBDA,lambda,"C#, Python, Java, JavaScript, PHP",Funciones_lambda,Define una función anónima,Previsto
+pass,PASS,pass,Python,Control_de_bloque,Instrucción vacía utilizada como marcador de bloque,Previsto
+global,GLOBAL,global,Python,Alcance_de_variable,Declara que una variable pertenece al ámbito global,Previsto
+del,DEL,del,Python,Eliminacion,"Elimina una referencia, elemento o atributo",Previsto
+with,WITH,with,Python,Contexto,Gestiona un contexto y recursos en Python,Previsto
+as,AS,as,"C#, Python, JavaScript, SQL",Alias_y_conversion,Define alias o participa en conversiones y patrones,Previsto
+is,IS,is,Python,Operador_identidad,Comprueba si dos referencias corresponden al mismo objeto,Previsto
+is not,IS_NOT,is not,Python,Operador_identidad,Comprueba que dos referencias no sean el mismo objeto,Previsto
+nameof,NAMEOF,nameof,C#,Operador_especial,Obtiene el nombre textual de un símbolo,Previsto
+typeof,TYPEOF,typeof,"C#, JavaScript",Operador_tipo,Obtiene información del tipo según el lenguaje,Previsto
+sizeof,SIZEOF,sizeof,"C#, C, C++",Operador_tipo,Obtiene el tamaño en bytes de un tipo o variable,Previsto
+checked,CHECKED,checked,C#,Contexto_aritmetico,Comprueba desbordamientos aritméticos enteros,Previsto
+unchecked,UNCHECKED,unchecked,C#,Contexto_aritmetico,Permite operaciones enteras sin comprobación de desbordamiento,Previsto
+lock,LOCK,lock,C#,Concurrencia,Protege una sección crítica mediante exclusión mutua,Previsto
+volatile,VOLATILE,volatile,"C#, Java, C, C++",Modificador,Indica reglas especiales de acceso a variables compartidas,Previsto
+<NUMERO_HEXADECIMAL>,NUMERO_HEXADECIMAL,0x[0-9A-Fa-f]+,"C#, Python, Java, C, C++, JavaScript, PHP",Literal_entero,Representa un entero en base hexadecimal,Previsto
+<NUMERO_BINARIO>,NUMERO_BINARIO,0b[01]+,"C#, Python, Java, C, C++, JavaScript",Literal_entero,Representa un entero en base binaria,Previsto
+<NUMERO_EXPONENTE>,NUMERO_EXPONENTE,notación e/E,"C#, Python, Java, C, C++, JavaScript, PHP",Literal_decimal,Representa un número en notación científica,Previsto
+<CADENA_INTERPOLADA>,CADENA_INTERPOLADA,"$""...""",C#; Python usa f-strings; JavaScript usa template literals,Literal_cadena,Combina texto con expresiones evaluadas,Previsto
+<CADENA_VERBATIM>,CADENA_VERBATIM,"@""...""",C#,Literal_cadena,Conserva barras invertidas y saltos de línea según reglas de C#,Previsto
+<CADENA_MULTILINEA>,CADENA_MULTILINEA,"""""""...""""""","Python, C# (raw strings), Java (text blocks)",Literal_cadena,Representa cadenas que abarcan varias líneas,Previsto

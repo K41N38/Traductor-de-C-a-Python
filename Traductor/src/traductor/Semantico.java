@@ -1041,24 +1041,28 @@ public class Semantico {
      * Determina el tipo de una expresión considerando las variables locales de
      * la función correspondiente.
      */
-    private static String inferirTipo(
-            Nodo nodo, String nombreFuncion) {
-
+    private static String inferirTipo(Nodo nodo, String nombreFuncion) {
         if (nodo == null) {
             return "desconocido";
         }
-
+        
         if ("valor".equals(nodo.tipo)) {
             String tipoValor = nodo.atributo("tipoValor");
 
             if ("numero".equals(tipoValor)) {
                 return "int";
             }
+
             if ("decimal".equals(tipoValor)) {
-                return "double";
+                return "float";
             }
+
             if ("cadena".equals(tipoValor)) {
                 return "string";
+            }
+
+            if ("caracter".equals(tipoValor)) {
+                return "char";
             }
 
             if ("true".equals(tipoValor)
@@ -1090,8 +1094,10 @@ public class Semantico {
             if ("int".equals(tipo)) {
                 return "int";
             }
-            if ("double".equals(tipo)) {
-                return "double";
+
+            if ("double".equals(tipo)
+                    || "float".equals(tipo)) {
+                return "float";
             }
         }
 
@@ -1154,13 +1160,10 @@ public class Semantico {
             }
 
             if (esNumerico(tipo1) && esNumerico(tipo2)) {
+                if ("float".equals(normalizarTipo(tipo1))
+                        || "float".equals(normalizarTipo(tipo2))) {
 
-                if ("double".equals(tipo1)
-                        || "double".equals(tipo2)
-                        || "float".equals(tipo1)
-                        || "float".equals(tipo2)) {
-
-                    return "double";
+                    return "float";
                 }
 
                 if ("long".equals(tipo1)
@@ -1185,13 +1188,10 @@ public class Semantico {
      * Determina si un tipo es numérico.
      */
     private static boolean esNumerico(String tipo) {
-        return "byte".equals(tipo)
-            || "short".equals(tipo)
-            || "int".equals(tipo)
-            || "long".equals(tipo)
-            || "float".equals(tipo)
-            || "double".equals(tipo)
-            || "decimal".equals(tipo);
+        tipo = normalizarTipo(tipo);
+
+        return "int".equals(tipo)
+            || "float".equals(tipo);
     }
 
     /**
@@ -1216,29 +1216,16 @@ public class Semantico {
             return true;
         }
 
+        // Permitir null en arreglos y cadenas.
         if ("null".equals(recibido)) {
             return esperado.endsWith("[]")
                 || "string".equals(esperado);
         }
 
-        if (esNumerico(esperado) && esNumerico(recibido)) {
-            // Se permiten conversiones numéricas habituales
-            // de tipos pequeños a tipos de mayor capacidad.
-            if ("double".equals(esperado)
-                    || "float".equals(esperado)) {
-                return true;
-            }
-
-            if ("long".equals(esperado)) {
-                return !"double".equals(recibido)
-                    && !"float".equals(recibido)
-                    && !"decimal".equals(recibido);
-            }
-
-            if ("int".equals(esperado)) {
-                return "byte".equals(recibido)
-                    || "short".equals(recibido);
-            }
+        // Permitir asignar enteros a variables float.
+        if ("float".equals(esperado)
+                && "int".equals(recibido)) {
+            return true;
         }
 
         return false;
@@ -1255,8 +1242,20 @@ public class Semantico {
         switch (tipo.toLowerCase(Locale.ROOT)) {
             case "bool":
                 return "boolean";
+
             case "cadena":
+            case "char":
                 return "string";
+
+            case "byte":
+            case "short":
+            case "long":
+                return "int";
+
+            case "float":
+            case "double":
+                return "float";
+
             default:
                 return tipo.toLowerCase(Locale.ROOT);
         }

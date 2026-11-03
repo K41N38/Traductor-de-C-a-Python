@@ -1,4 +1,2 @@
-# Pruebas
-numero = 1
-nombre = "Kain"
-decimal = 1.1
+flotante = 1
+flot = 1.1
