@@ -1405,13 +1405,50 @@ Nodo conversionParse() :
             tipo = "int";
         }
       |
+        t=<LONG> {
+            mostrarToken(t);
+            tipo = "long";
+        }
+      |
+        t=<SHORT> {
+            mostrarToken(t);
+            tipo = "short";
+        }
+      |
+        t=<BYTE> {
+            mostrarToken(t);
+            tipo = "byte";
+        }
+      |
+        t=<FLOAT> {
+            mostrarToken(t);
+            tipo = "float";
+        }
+      |
         t=<DOUBLE> {
             mostrarToken(t);
             tipo = "double";
         }
+      |
+        t=<BOOL> {
+            mostrarToken(t);
+            tipo = "bool";
+        }
+      |
+        t=<BOOLEAN> {
+            mostrarToken(t);
+            tipo = "bool";
+        }
+      |
+        t=<CHAR> {
+            mostrarToken(t);
+            tipo = "char";
+        }
     )
 
-    t=<PUNTO> { mostrarToken(t); }
+    t=<PUNTO> {
+        mostrarToken(t);
+    }
 
     t=<IDENTIFICADOR> {
         mostrarToken(t);
@@ -1421,24 +1458,33 @@ Nodo conversionParse() :
                 "Solo se admite Parse para esta conversion."
             );
         }
+
+        n.atributo("tipo", tipo);
+        n.atributo("origen", "Parse");
     }
 
-    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+    t=<PARENTESIS_IZQ> {
+        mostrarToken(t);
+    }
 
     argumento=expresion() {
-        n.atributo("tipo", tipo);
         n.agregar(argumento);
     }
 
-    t=<PARENTESIS_DER> { mostrarToken(t); }
+    t=<PARENTESIS_DER> {
+        mostrarToken(t);
+    }
 
-    { return n; }
+    {
+        return n;
+    }
 }
 
 Nodo conversionConvert() :
 {
     Token t;
     String tipo;
+    String metodo;
     Nodo n = new Nodo("conversionTipo");
     Nodo argumento;
 }
@@ -1453,33 +1499,68 @@ Nodo conversionConvert() :
         }
     }
 
-    t=<PUNTO> { mostrarToken(t); }
+    t=<PUNTO> {
+        mostrarToken(t);
+    }
 
     t=<IDENTIFICADOR> {
         mostrarToken(t);
 
-        if ("ToInt32".equals(t.image)) {
+        metodo = t.image;
+
+        if ("ToByte".equals(metodo)) {
+            tipo = "byte";
+
+        } else if ("ToInt16".equals(metodo)) {
+            tipo = "short";
+
+        } else if ("ToInt32".equals(metodo)) {
             tipo = "int";
-        } else if ("ToDouble".equals(t.image)) {
+
+        } else if ("ToInt64".equals(metodo)) {
+            tipo = "long";
+
+        } else if ("ToSingle".equals(metodo)) {
+            tipo = "float";
+
+        } else if ("ToDouble".equals(metodo)) {
             tipo = "double";
+
+        } else if ("ToBoolean".equals(metodo)) {
+            tipo = "bool";
+
+        } else if ("ToChar".equals(metodo)) {
+            tipo = "char";
+
+        } else if ("ToString".equals(metodo)) {
+            tipo = "string";
+
         } else {
             throw new ParseException(
-                "Conversion no soportada: " + t.image
+                "Conversion no soportada: " + metodo
             );
         }
 
         n.atributo("tipo", tipo);
+        n.atributo("origen", "Convert");
+        n.atributo("metodo", metodo);
     }
 
-    t=<PARENTESIS_IZQ> { mostrarToken(t); }
+    t=<PARENTESIS_IZQ> {
+        mostrarToken(t);
+    }
 
     argumento=expresion() {
         n.agregar(argumento);
     }
 
-    t=<PARENTESIS_DER> { mostrarToken(t); }
+    t=<PARENTESIS_DER> {
+        mostrarToken(t);
+    }
 
-    { return n; }
+    {
+        return n;
+    }
 }
 
 Nodo nuevoArreglo() :
@@ -1739,25 +1820,43 @@ Nodo expresionPrimaria() :
         return n;
     }
 
-    | LOOKAHEAD(<INT> <PUNTO> <IDENTIFICADOR> <PARENTESIS_IZQ>)
-    n=conversionParse()
-    {
-        return n;
-    }
-
-    | LOOKAHEAD(<DOUBLE> <PUNTO> <IDENTIFICADOR> <PARENTESIS_IZQ>)
+    | LOOKAHEAD({
+        (
+            getToken(1).kind == INT
+            || getToken(1).kind == LONG
+            || getToken(1).kind == SHORT
+            || getToken(1).kind == BYTE
+            || getToken(1).kind == FLOAT
+            || getToken(1).kind == DOUBLE
+            || getToken(1).kind == BOOL
+            || getToken(1).kind == BOOLEAN
+            || getToken(1).kind == CHAR
+        )
+        && getToken(2).kind == PUNTO
+        && getToken(3).kind == IDENTIFICADOR
+        && "Parse".equals(getToken(3).image)
+        && getToken(4).kind == PARENTESIS_IZQ
+    })
     n=conversionParse()
     {
         return n;
     }
 
     | LOOKAHEAD({
-        getToken(1).image.equals("Convert")
+        "Convert".equals(getToken(1).image)
         && getToken(2).kind == PUNTO
         && (
-            getToken(3).image.equals("ToInt32")
-            || getToken(3).image.equals("ToDouble")
+            "ToByte".equals(getToken(3).image)
+            || "ToInt16".equals(getToken(3).image)
+            || "ToInt32".equals(getToken(3).image)
+            || "ToInt64".equals(getToken(3).image)
+            || "ToSingle".equals(getToken(3).image)
+            || "ToDouble".equals(getToken(3).image)
+            || "ToBoolean".equals(getToken(3).image)
+            || "ToChar".equals(getToken(3).image)
+            || "ToString".equals(getToken(3).image)
         )
+        && getToken(4).kind == PARENTESIS_IZQ
     })
     n=conversionConvert()
     {

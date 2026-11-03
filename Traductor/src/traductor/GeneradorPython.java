@@ -15,9 +15,18 @@ public class GeneradorPython {
         actualizacionesContinue.clear();
 
         StringBuilder sb = new StringBuilder();
+
+        // Agregar funciones auxiliares solamente si el programa
+        // contiene alguna conversión Parse o Convert.
+        if (contieneConversion(raiz)) {
+            sb.append(generarAuxiliaresConversion());
+            sb.append("\n");
+        }
+
         for (Nodo hijo : raiz.hijos) {
             sb.append(generarInstruccion(hijo, 0));
         }
+
         return sb.toString();
     }
     
@@ -25,6 +34,140 @@ public class GeneradorPython {
         return INDENT.repeat(Math.max(0, nivel));
     }
 
+    private boolean contieneConversion(Nodo n) {
+        if (n == null) {
+            return false;
+        }
+
+        if ("conversionTipo".equals(n.tipo)) {
+            return true;
+        }
+
+        for (Nodo hijo : n.hijos) {
+            if (contieneConversion(hijo)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private String generarAuxiliaresConversion() {
+        return """
+            # Funciones auxiliares para conservar el comportamiento de C#.
+
+            def _cs_parse_integer(valor, minimo, maximo):
+                texto = str(valor).strip()
+                digitos = texto[1:] if texto[:1] in ("+", "-") else texto
+
+                if not digitos or not digitos.isascii() or not digitos.isdigit():
+                    raise ValueError("Formato de entero no valido")
+
+                resultado = int(texto, 10)
+
+                if resultado < minimo or resultado > maximo:
+                    raise OverflowError("Valor fuera del rango permitido")
+
+                return resultado
+
+
+            def _cs_parse_float(valor):
+                return float(str(valor).strip())
+
+
+            def _cs_parse_bool(valor):
+                texto = str(valor).strip().lower()
+
+                if texto == "true":
+                    return True
+
+                if texto == "false":
+                    return False
+
+                raise ValueError("La cadena no representa un valor booleano valido")
+
+
+            def _cs_parse_char(valor):
+                texto = str(valor)
+
+                if len(texto) != 1:
+                    raise ValueError("Se esperaba exactamente un caracter")
+
+                return texto
+
+
+            def _cs_convert_integer(valor, minimo, maximo):
+                if valor is None:
+                    resultado = 0
+                elif isinstance(valor, bool):
+                    resultado = int(valor)
+                elif isinstance(valor, str):
+                    return _cs_parse_integer(valor, minimo, maximo)
+                else:
+                    resultado = int(round(valor))
+
+                if resultado < minimo or resultado > maximo:
+                    raise OverflowError("Valor fuera del rango permitido")
+
+                return resultado
+
+
+            def _cs_convert_float(valor):
+                if valor is None:
+                    return 0.0
+
+                return float(valor)
+
+
+            def _cs_convert_single(valor):
+                import struct
+
+                resultado = _cs_convert_float(valor)
+
+                try:
+                    return struct.unpack("f", struct.pack("f", resultado))[0]
+                except OverflowError:
+                    raise OverflowError("Valor fuera del rango de Single")
+
+
+            def _cs_convert_bool(valor):
+                if valor is None:
+                    return False
+
+                if isinstance(valor, str):
+                    return _cs_parse_bool(valor)
+
+                return bool(valor)
+
+
+            def _cs_convert_char(valor):
+                if valor is None:
+                    return "\\0"
+
+                if isinstance(valor, str):
+                    if len(valor) != 1:
+                        raise ValueError("Se esperaba exactamente un caracter")
+
+                    return valor
+
+                if isinstance(valor, bool) or not isinstance(valor, int):
+                    raise TypeError("Tipo no valido para Convert.ToChar")
+
+                if valor < 0 or valor > 65535:
+                    raise OverflowError("Valor fuera del rango de Char")
+
+                return chr(valor)
+
+
+            def _cs_convert_string(valor):
+                if valor is None:
+                    return ""
+
+                return str(valor)
+
+            """;
+    }
+    
     private String generarInstruccion(Nodo n, int nivel) {
         switch (n.tipo) {
             case "comentario": return generarComentario(n, nivel);
@@ -700,15 +843,94 @@ public class GeneradorPython {
         
         // Conversiones de tipos de C# a Python.
         if ("conversionTipo".equals(n.tipo)) {
+
             String tipo = n.atributo("tipo");
+            String origen = n.atributo("origen");
             String argumento = generarExpr(n.hijo(0));
 
-            if ("int".equals(tipo)) {
-                return "int(" + argumento + ")";
+            // Conversiones mediante Parse.
+            if ("Parse".equals(origen)) {
+
+                switch (tipo) {
+
+                    case "int":
+                        return "_cs_parse_integer("
+                                + argumento
+                                + ", -2147483648, 2147483647)";
+
+                    case "long":
+                        return "_cs_parse_integer("
+                                + argumento
+                                + ", -9223372036854775808, 9223372036854775807)";
+
+                    case "short":
+                        return "_cs_parse_integer("
+                                + argumento
+                                + ", -32768, 32767)";
+
+                    case "byte":
+                        return "_cs_parse_integer("
+                                + argumento
+                                + ", 0, 255)";
+
+                    case "float":
+                    case "double":
+                        return "_cs_parse_float("
+                                + argumento + ")";
+
+                    case "bool":
+                        return "_cs_parse_bool("
+                                + argumento + ")";
+
+                    case "char":
+                        return "_cs_parse_char("
+                                + argumento + ")";
+                }
             }
 
-            if ("double".equals(tipo)) {
-                return "float(" + argumento + ")";
+            // Conversiones mediante Convert.
+            if ("Convert".equals(origen)) {
+
+                switch (tipo) {
+
+                    case "byte":
+                        return "_cs_convert_integer("
+                                + argumento + ", 0, 255)";
+
+                    case "short":
+                        return "_cs_convert_integer("
+                                + argumento + ", -32768, 32767)";
+
+                    case "int":
+                        return "_cs_convert_integer("
+                                + argumento
+                                + ", -2147483648, 2147483647)";
+
+                    case "long":
+                        return "_cs_convert_integer("
+                                + argumento
+                                + ", -9223372036854775808, 9223372036854775807)";
+
+                    case "float":
+                        return "_cs_convert_single("
+                                + argumento + ")";
+
+                    case "double":
+                        return "_cs_convert_float("
+                                + argumento + ")";
+
+                    case "bool":
+                        return "_cs_convert_bool("
+                                + argumento + ")";
+
+                    case "char":
+                        return "_cs_convert_char("
+                                + argumento + ")";
+
+                    case "string":
+                        return "_cs_convert_string("
+                                + argumento + ")";
+                }
             }
 
             return argumento;
@@ -881,12 +1103,31 @@ public class GeneradorPython {
         if ("conversionTipo".equals(n.tipo)) {
             String tipo = n.atributo("tipo");
 
-            if ("int".equals(tipo)) {
-                return "int";
+            if (tipo == null) {
+                return null;
             }
 
-            if ("double".equals(tipo) || "float".equals(tipo)) {
-                return "float";
+            switch (tipo) {
+
+                case "int":
+                case "long":
+                case "short":
+                case "byte":
+                    return "int";
+
+                case "double":
+                case "float":
+                    return "float";
+
+                case "bool":
+                    return "bool";
+
+                case "char":
+                case "string":
+                    return "cadena";
+
+                default:
+                    return null;
             }
         }
 

@@ -1091,14 +1091,11 @@ public class Semantico {
         if ("conversionTipo".equals(nodo.tipo)) {
             String tipo = nodo.atributo("tipo");
 
-            if ("int".equals(tipo)) {
-                return "int";
+            if (tipo != null) {
+                return tipo;
             }
 
-            if ("double".equals(tipo)
-                    || "float".equals(tipo)) {
-                return "float";
-            }
+            return "desconocido";
         }
 
         if ("propiedadArreglo".equals(nodo.tipo)) {
