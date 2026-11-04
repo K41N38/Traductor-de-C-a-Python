@@ -16,11 +16,30 @@ public class GeneradorPython {
 
         StringBuilder sb = new StringBuilder();
 
-        // Agregar funciones auxiliares solamente si el programa
-        // contiene alguna conversión Parse o Convert.
-        if (contieneConversion(raiz)) {
-            sb.append(generarAuxiliaresConversion());
-            sb.append("\n");
+        if (contieneConversion(raiz)
+                || contieneDivisionEntera(raiz)
+                || contieneModuloEntero(raiz)
+                || contieneModuloDecimal(raiz)) {
+
+            if (contieneConversion(raiz)) {
+                sb.append(generarAuxiliaresConversion());
+                sb.append("\n");
+            }
+
+            if (contieneDivisionEntera(raiz)) {
+                sb.append(generarAuxiliarDivisionEntera());
+                sb.append("\n");
+            }
+
+            if (contieneModuloEntero(raiz)) {
+                sb.append(generarAuxiliarModuloEntero());
+                sb.append("\n");
+            }
+
+            if (contieneModuloDecimal(raiz)) {
+                sb.append(generarAuxiliarModuloDecimal());
+                sb.append("\n");
+            }
         }
 
         for (Nodo hijo : raiz.hijos) {
@@ -50,6 +69,158 @@ public class GeneradorPython {
         }
 
         return false;
+    }
+    
+    private boolean contieneDivisionEntera(Nodo n) {
+        if (n == null) {
+            return false;
+        }
+        
+        if (("asignacion".equals(n.tipo)
+                || "asignacionSimple".equals(n.tipo))
+                && "/=".equals(n.atributo("operadorAsignacion"))
+                && "int".equals(
+                        normalizarTipo(Semantico.obtenerTipoVariable(n.valor)))) {
+            return true;
+        }
+        
+        if ("expresion".equals(n.tipo)
+                && "/".equals(n.atributo("operador"))
+                && n.hijos.size() == 2
+                && "int".equals(inferirTipoExpr(n.hijo(0)))
+                && "int".equals(inferirTipoExpr(n.hijo(1)))) {
+            return true;
+        }
+
+        for (Nodo hijo : n.hijos) {
+            if (contieneDivisionEntera(hijo)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private boolean contieneModuloEntero(Nodo n) {
+        if (n == null) {
+            return false;
+        }
+
+        // Módulo entre dos expresiones enteras.
+        if ("expresion".equals(n.tipo)
+                && "%".equals(n.atributo("operador"))
+                && n.hijos.size() == 2
+                && "int".equals(inferirTipoExpr(n.hijo(0)))
+                && "int".equals(inferirTipoExpr(n.hijo(1)))) {
+            return true;
+        }
+
+        // Asignación compuesta de módulo sobre una variable entera.
+        if (("asignacion".equals(n.tipo)
+                || "asignacionSimple".equals(n.tipo))
+                && "%=".equals(n.atributo("operadorAsignacion"))
+                && "int".equals(
+                        normalizarTipo(
+                                Semantico.obtenerTipoVariable(n.valor)))) {
+            return true;
+        }
+
+        for (Nodo hijo : n.hijos) {
+            if (contieneModuloEntero(hijo)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    private boolean contieneModuloDecimal(Nodo n) {
+        if (n == null) {
+            return false;
+        }
+
+        // Modulo donde al menos uno de los operandos es decimal.
+        if ("expresion".equals(n.tipo)
+                && "%".equals(n.atributo("operador"))
+                && n.hijos.size() == 2) {
+
+            String tipoIzquierdo = inferirTipoExpr(n.hijo(0));
+            String tipoDerecho = inferirTipoExpr(n.hijo(1));
+
+            if ("float".equals(tipoIzquierdo)
+                    || "float".equals(tipoDerecho)) {
+                return true;
+            }
+        }
+
+        // Asignacion compuesta de modulo sobre una variable decimal.
+        if (("asignacion".equals(n.tipo)
+                || "asignacionSimple".equals(n.tipo))
+                && "%=".equals(n.atributo("operadorAsignacion"))
+                && "float".equals(
+                        normalizarTipo(
+                                Semantico.obtenerTipoVariable(n.valor)))) {
+            return true;
+        }
+
+        for (Nodo hijo : n.hijos) {
+            if (contieneModuloDecimal(hijo)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    private String generarAuxiliarDivisionEntera() {
+        return """
+            # Division entera compatible con C#.
+
+            def _cs_integer_division(a, b):
+                if b == 0:
+                    raise ZeroDivisionError("Division entre cero")
+
+                resultado = abs(a) // abs(b)
+
+                if (a < 0) != (b < 0):
+                    return -resultado
+
+                return resultado
+
+            """;
+    }
+    
+    private String generarAuxiliarModuloEntero() {
+        return """
+            # Modulo entero compatible con C#.
+
+            def _cs_integer_modulo(a, b):
+                if b == 0:
+                    raise ZeroDivisionError("Modulo entre cero")
+
+                cociente = abs(a) // abs(b)
+
+                if (a < 0) != (b < 0):
+                    cociente = -cociente
+
+                return a - cociente * b
+
+            """;
+    }
+    
+    private String generarAuxiliarModuloDecimal() {
+        return """
+            # Modulo decimal compatible con C#.
+
+            import math
+
+            def _cs_float_modulo(a, b):
+                if b == 0:
+                    raise ZeroDivisionError("Modulo entre cero")
+
+                return math.fmod(a, b)
+
+            """;
     }
 
     private String generarAuxiliaresConversion() {
@@ -264,8 +435,42 @@ public class GeneradorPython {
             expresion = n.hijo(0);
         }
 
+        String valor = generarExpr(expresion);
+
+        // C# realiza división entera cuando el destino es entero.
+        if ("/=".equals(operador)
+                && "int".equals(
+                        normalizarTipo(Semantico.obtenerTipoVariable(n.valor)))
+                && "int".equals(inferirTipoExpr(expresion))) {
+
+            return tab(nivel)
+                    + destino + " = _cs_integer_division("
+                    + destino + ", " + valor + ")\n";
+        }
+
+        // Módulo entero compatible con C#.
+        if ("%=".equals(operador)
+                && "int".equals(
+                        normalizarTipo(
+                                Semantico.obtenerTipoVariable(n.valor)))
+                && "int".equals(inferirTipoExpr(expresion))) {
+
+            return tab(nivel)
+                    + destino + " = _cs_integer_modulo("
+                    + destino + ", " + valor + ")\n";
+        }
+        
+        if ("%=".equals(operador)
+                && "float".equals(
+                        normalizarTipo(
+                                Semantico.obtenerTipoVariable(n.valor)))) {
+
+            return tab(nivel) + destino + " = _cs_float_modulo("
+                    + destino + ", " + valor + ")\n";
+        }
+        
         return tab(nivel) + destino + " " + operador + " "
-                + generarExpr(expresion) + "\n";
+                + valor + "\n";
     }
 
     private String generarContinue(int nivel) {
@@ -419,7 +624,7 @@ public class GeneradorPython {
 
         String rango = construirRangePython(n);
 
-        // Si se pudo convertir a range(), generar un for nativo.
+        // Si la conversion es segura, utilizar range().
         if (rango != null) {
 
             String variable = obtenerVariableFor(n);
@@ -430,7 +635,7 @@ public class GeneradorPython {
                             n.hijo(3), nivel + 1, "ciclo");
         }
 
-        // Respaldo: conservar el comportamiento anterior con while.
+        // Respaldo: conservar la condicion y actualizacion originales.
         Nodo init = n.hijo(0);
         Nodo cond = n.hijo(1);
         Nodo upd = n.hijo(2);
@@ -459,9 +664,13 @@ public class GeneradorPython {
             actualizacionesContinue.pop();
         }
 
-        sb.append(tab(nivel + 1))
-          .append(actualizacion)
-          .append("\n");
+        // La actualizacion tambien se ejecuta al terminar
+        // normalmente cada iteracion.
+        if (!actualizacion.isEmpty()) {
+            sb.append(tab(nivel + 1))
+              .append(actualizacion)
+              .append("\n");
+        }
 
         return sb.toString();
     }
@@ -490,23 +699,49 @@ public class GeneradorPython {
     
     private String obtenerVariableFor(Nodo n) {
 
+        if (n == null || n.hijos.isEmpty()) {
+            return null;
+        }
+
         Nodo init = n.hijo(0);
+
+        if (init == null) {
+            return null;
+        }
 
         if ("declaracionesMultiples".equals(init.tipo)
                 && !init.hijos.isEmpty()) {
+
             return init.hijo(0).valor;
         }
 
-        return init.valor;
+        if ("asignacionSimple".equals(init.tipo)) {
+            return init.valor;
+        }
+
+        return null;
     }
 
     private String construirRangePython(Nodo n) {
 
+        if (n == null || n.hijos.size() < 4) {
+            return null;
+        }
+
         Nodo init = n.hijo(0);
         Nodo cond = n.hijo(1);
         Nodo upd = n.hijo(2);
+        Nodo cuerpo = n.hijo(3);
+
+        if (init == null || cond == null || upd == null) {
+            return null;
+        }
 
         String variable = obtenerVariableFor(n);
+
+        if (variable == null || variable.isEmpty()) {
+            return null;
+        }
 
         String inicio = obtenerInicioFor(init);
 
@@ -526,11 +761,121 @@ public class GeneradorPython {
             return null;
         }
 
-        if ("1".equals(paso)) {
-            return "range(" + inicio + ", " + fin + ")";
+        // Comprobar que el paso tenga una direccion conocida.
+        int signoPaso = obtenerSignoPaso(paso);
+
+        if (signoPaso == 0) {
+            return null;
+        }
+
+        String operador = cond.atributo("operador");
+
+        // Evitar conversiones con direccion incompatible.
+        if (("<".equals(operador) || "<=".equals(operador))
+                && signoPaso < 0) {
+            return null;
+        }
+
+        if ((">".equals(operador) || ">=".equals(operador))
+                && signoPaso > 0) {
+            return null;
+        }
+
+        // No convertir si el cuerpo modifica la variable de control.
+        if (modificaVariable(cuerpo, variable)) {
+            return null;
+        }
+
+        // Obtener las variables utilizadas en el limite.
+        Set<String> variablesLimite = new HashSet<>();
+
+        recolectarIdentificadores(cond.hijo(1), variablesLimite);
+
+        // No convertir si el cuerpo modifica alguna variable del limite.
+        for (String variableLimite : variablesLimite) {
+
+            if (modificaVariable(cuerpo, variableLimite)) {
+                return null;
+            }
         }
 
         return "range(" + inicio + ", " + fin + ", " + paso + ")";
+    }
+    
+    private boolean modificaVariable(Nodo n, String variable) {
+
+        if (n == null || variable == null) {
+            return false;
+        }
+
+        // Asignaciones normales y compuestas.
+        if (("asignacion".equals(n.tipo)
+                || "asignacionSimple".equals(n.tipo)
+                || "incrementoDecremento".equals(n.tipo))
+                && variable.equals(n.valor)) {
+
+            return true;
+        }
+
+        // Revisar recursivamente los bloques y expresiones internas.
+        for (Nodo hijo : n.hijos) {
+
+            if (modificaVariable(hijo, variable)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+    
+    private void recolectarIdentificadores(
+            Nodo n, Set<String> identificadores) {
+
+        if (n == null) {
+            return;
+        }
+
+        // Identificar variables utilizadas en expresiones.
+        if ("valor".equals(n.tipo)
+                && "identificador".equals(
+                        n.atributo("tipoValor"))
+                && n.valor != null) {
+
+            identificadores.add(n.valor);
+        }
+
+        // Recorrer expresiones anidadas.
+        for (Nodo hijo : n.hijos) {
+
+            recolectarIdentificadores(hijo, identificadores);
+        }
+    }
+    
+    private int obtenerSignoPaso(String paso) {
+
+        if (paso == null) {
+            return 0;
+        }
+
+        paso = paso.trim();
+
+        try {
+            long valor = Long.parseLong(paso);
+
+            if (valor > 0) {
+                return 1;
+            }
+
+            if (valor < 0) {
+                return -1;
+            }
+
+            return 0;
+
+        } catch (NumberFormatException e) {
+            // No conocemos el signo de expresiones o variables.
+            return 0;
+        }
     }
 
     private String obtenerInicioFor(Nodo init) {
@@ -556,7 +901,9 @@ public class GeneradorPython {
 
     private String obtenerFinFor(Nodo cond, String variable) {
 
-        if (!"expresionLogica".equals(cond.tipo)) {
+        if (cond == null
+                || !"expresionLogica".equals(cond.tipo)
+                || cond.hijos.size() != 2) {
             return null;
         }
 
@@ -572,30 +919,36 @@ public class GeneradorPython {
             return null;
         }
 
+        if (!"<".equals(op)
+                && !"<=".equals(op)
+                && !">".equals(op)
+                && !">=".equals(op)) {
+            return null;
+        }
+
         String limite = generarExpr(der);
 
-        return switch (op) {
+        switch (op) {
 
-            case "<" ->
-                limite;
+            case "<":
+            case ">":
+                return limite;
 
-            case "<=" ->
-                limite + " + 1";
+            case "<=":
+                return "(" + limite + " + 1)";
 
-            case ">" ->
-                limite;
+            case ">=":
+                return "(" + limite + " - 1)";
 
-            case ">=" ->
-                limite + " - 1";
-
-            default ->
-                null;
-        };
+            default:
+                return null;
+        }
     }
 
     private String obtenerPasoFor(Nodo upd, String variable) {
 
-        if (!variable.equals(upd.valor)) {
+        if (upd == null || variable == null
+                || !variable.equals(upd.valor)) {
             return null;
         }
 
@@ -611,10 +964,18 @@ public class GeneradorPython {
                 return "-1";
 
             case "+=":
+                if (upd.hijos.size() != 1) {
+                    return null;
+                }
+
                 return generarExpr(upd.hijo(0));
 
             case "-=":
-                return "-" + generarExpr(upd.hijo(0));
+                if (upd.hijos.size() != 1) {
+                    return null;
+                }
+
+                return "-(" + generarExpr(upd.hijo(0)) + ")";
 
             default:
                 return null;
@@ -1076,7 +1437,24 @@ public class GeneradorPython {
             if ("/".equals(operador)
                     && "int".equals(tipoIzquierdo)
                     && "int".equals(tipoDerecho)) {
-                return "int(" + izquierda + " / " + derecha + ")";
+                return "_cs_integer_division("
+                        + izquierda + ", " + derecha + ")";
+            }
+            
+            // Modulo entero: conserva el comportamiento de C#.
+            if ("%".equals(operador)
+                    && "int".equals(tipoIzquierdo)
+                    && "int".equals(tipoDerecho)) {
+                return "_cs_integer_modulo("
+                        + izquierda + ", " + derecha + ")";
+            }
+
+            // Modulo decimal: conserva el signo del dividendo como en C#.
+            if ("%".equals(operador)
+                    && ("float".equals(tipoIzquierdo)
+                        || "float".equals(tipoDerecho))) {
+                return "_cs_float_modulo("
+                        + izquierda + ", " + derecha + ")";
             }
 
             if ("&&".equals(operador)) operador = "and";
@@ -1178,6 +1556,12 @@ public class GeneradorPython {
         }
 
         if ("agrupacion".equals(n.tipo)) {
+            return inferirTipoExpr(n.hijo(0));
+        }
+        
+        // Una expresión unaria conserva el tipo de su operando.
+        if (n.hijos.size() == 1
+                && "unario-".equals(n.atributo("operador"))) {
             return inferirTipoExpr(n.hijo(0));
         }
 

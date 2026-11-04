@@ -110,6 +110,34 @@ def _cs_convert_string(valor):
     return str(valor)
 
 
+# Division entera compatible con C#.
+
+def _cs_integer_division(a, b):
+    if b == 0:
+        raise ZeroDivisionError("Division entre cero")
+
+    resultado = abs(a) // abs(b)
+
+    if (a < 0) != (b < 0):
+        return -resultado
+
+    return resultado
+
+
+# Modulo entero compatible con C#.
+
+def _cs_integer_modulo(a, b):
+    if b == 0:
+        raise ZeroDivisionError("Modulo entre cero")
+
+    cociente = abs(a) // abs(b)
+
+    if (a < 0) != (b < 0):
+        cociente = -cociente
+
+    return a - cociente * b
+
+
 # Variables
 edad = 25
 matematica = 85
@@ -142,7 +170,7 @@ print(respuesta)
 # WHILE principal
 contador = 0
 while contador < 10:
-    if contador % 2 == 0:
+    if _cs_integer_modulo(contador, 2) == 0:
         print("Número par: " + str(contador))
         if contador == 0:
             print("Iniciando conteo")
@@ -157,13 +185,13 @@ while contador < 10:
         elif contador == 4:
             print("Número par medio: " + str(contador))
             try:
-                calculo = int(contador / (contador - 2))
+                calculo = _cs_integer_division(contador, (contador - 2))
                 print("Cálculo exitoso: " + str(calculo))
             except ArithmeticError:
                 print("Error en cálculo para: " + str(contador))
         elif contador == 6:
             print("Número par medio: " + str(contador))
-            for i in range(0, 2):
+            for i in range(0, 2, 1):
                 print("For interno en caso 6")
         elif contador == 8:
             print("Número par medio: " + str(contador))
@@ -188,7 +216,7 @@ while contador < 10:
                         intentos -= 1
                 elif puntuacion == 50 or puntuacion == 75:
                     print("Puntuación media")
-                    for j in range(0, 2):
+                    for j in range(0, 2, 1):
                         print("Optimizando...")
                 else:
                     print("Puntuación: " + str(puntuacion))
@@ -208,7 +236,7 @@ while contador < 10:
                 if num > 2:
                     print("Número > 2: " + str(num))
                     if num == 3:
-                        calculoo = (num * 10) + (int(edad / 5))
+                        calculoo = (num * 10) + (_cs_integer_division(edad, 5))
                         print("Cálculo 3: " + str(calculoo))
                     elif num == 4:
                         print("Cuadrado perfecto")
@@ -233,7 +261,7 @@ while contador < 10:
                 print("Proceso crítico final...")
                 if activo:
                     try:
-                        division = int(100 / (edad - 25))
+                        division = _cs_integer_division(100, (edad - 25))
                         print("División: " + str(division))
                     except ArithmeticError:
                         print("División fallida")
@@ -253,7 +281,7 @@ while contador < 10:
 print("Finalizando programa...")
 if puntuacion > 50:
     print("Resultado satisfactorio")
-    for k in range(0, 2):
+    for k in range(0, 2, 1):
         try:
             finalScore = puntuacion * 2
             print("Puntuación final: " + str(finalScore))

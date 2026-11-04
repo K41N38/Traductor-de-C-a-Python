@@ -187,6 +187,64 @@ public class Traductor {
         System.out.println("Funcion: " + funcion);
         System.out.println("Estado: " + estado);
     }
+
+    /**
+     * Comprueba si la expresion que comienza con un parentesis
+     * contiene operadores relacionales o logicos.
+     *
+     * No consume tokens; solamente inspecciona los siguientes.
+     */
+    private boolean parentesisContieneOperadorLogico() {
+
+        if (getToken(1).kind != PARENTESIS_IZQ) {
+            return false;
+        }
+
+        int profundidad = 0;
+        boolean contieneOperador = false;
+
+        for (int i = 1; ; i++) {
+
+            Token actual = getToken(i);
+
+            if (actual.kind == EOF) {
+                return false;
+            }
+
+            if (actual.kind == PARENTESIS_IZQ) {
+
+                profundidad++;
+
+            } else if (actual.kind == PARENTESIS_DER) {
+
+                profundidad--;
+
+                // Llegamos al parentesis que cierra
+                // la agrupacion que estamos inspeccionando.
+                if (profundidad == 0) {
+                    return contieneOperador;
+                }
+
+            } else if (profundidad > 0) {
+
+                switch (actual.kind) {
+
+                    case MENOR:
+                    case MAYOR:
+                    case MENOR_IGUAL:
+                    case MAYOR_IGUAL:
+                    case IGUALDAD:
+                    case DIFERENTE:
+                    case AND_LOGICO:
+                    case OR_LOGICO:
+                    case NOT_LOGICO:
+
+                        contieneOperador = true;
+                        break;
+                }
+            }
+        }
+    }
 }
 
 PARSER_END(Traductor)
@@ -610,7 +668,7 @@ Nodo declaracionVariableElemento(String tipoDato, boolean esConstante) :
 
     [
         t=<ASIGNACION> { mostrarToken(t); }
-        exp=expresion() { n.agregar(exp); }
+        exp=expresionLogica() { n.agregar(exp); }
     ]
 
     { return n; }
@@ -732,7 +790,7 @@ Nodo asignacion() :
         }
     )
 
-    exp=expresion()
+    exp=expresionLogica()
     { n.agregar(exp); }
 
     t=<PUNTO_Y_COMA> { mostrarToken(t); }
@@ -1232,8 +1290,13 @@ Nodo expresionAnd() :
 }
 
 Nodo expresionNot() :
-{ Nodo n; Token t; Nodo resultado; }
 {
+    Nodo n;
+    Token t;
+    Nodo resultado;
+}
+{
+      // Negacion logica.
       t=<NOT_LOGICO> {
           mostrarToken(t);
       }
@@ -1244,11 +1307,12 @@ Nodo expresionNot() :
           return resultado;
       }
 
-    | t=<PARENTESIS_IZQ> {
+    // Agrupacion logica.
+    | LOOKAHEAD( { parentesisContieneOperadorLogico() } )
+      t=<PARENTESIS_IZQ> {
           mostrarToken(t);
       }
-      n=expresionLogica() {
-      }
+      n=expresionLogica()
       t=<PARENTESIS_DER> {
           mostrarToken(t);
       }
@@ -1258,6 +1322,7 @@ Nodo expresionNot() :
           return resultado;
       }
 
+    // Expresion aritmetica o relacional.
     | n=expresionRelacional() {
           return n;
       }
