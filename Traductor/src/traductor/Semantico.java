@@ -1024,6 +1024,57 @@ public class Semantico {
             }
         }
         
+        // Validación de ciclos foreach.
+        if ("cicloForeach".equals(nodo.tipo)) {
+
+            String tipoElemento = nodo.atributo("tipoDato");
+            String nombreColeccion = nodo.atributo("coleccion");
+
+            String tipoColeccion = obtenerTipoVariable(
+                    nombreColeccion, nombreFuncion
+            );
+
+            if (tipoColeccion != null
+                    && tipoElemento != null) {
+
+                String tipoEsperado;
+
+                // Si es un arreglo, obtener el tipo de sus elementos.
+                if (tipoColeccion.endsWith("[]")) {
+
+                    tipoEsperado = tipoColeccion.substring(
+                            0, tipoColeccion.length() - 2
+                    );
+
+                // Una cadena de C# se recorre carácter por carácter.
+                } else if ("string".equals(tipoColeccion)) {
+
+                    tipoEsperado = "char";
+
+                } else {
+
+                    error(
+                            "La variable '" + nombreColeccion
+                            + "' no es una colección válida para foreach."
+                    );
+
+                    tipoEsperado = null;
+                }
+
+                if (tipoEsperado != null
+                        && !tiposCompatiblesForeach(
+                                tipoElemento, tipoEsperado)) {
+
+                    error(
+                            "El ciclo foreach declara un elemento de tipo '"
+                            + tipoElemento + "', pero la colección '"
+                            + nombreColeccion + "' contiene elementos de tipo '"
+                            + tipoEsperado + "'."
+                    );
+                }
+            }
+        }
+        
         // Continuar recorriendo el AST con el mismo ámbito.
         for (Nodo hijo : nodo.hijos) {
             validarTipos(hijo, nombreFuncion);
@@ -1226,6 +1277,68 @@ public class Semantico {
         }
 
         return false;
+    }
+    
+    /**
+     * Comprueba la compatibilidad de tipos en ciclos foreach.
+     * Considera las conversiones numéricas implícitas más comunes.
+     */
+    private static boolean tiposCompatiblesForeach(
+            String tipoElemento,
+            String tipoColeccion) {
+
+        if (tipoElemento == null || tipoColeccion == null) {
+            return false;
+        }
+
+        tipoElemento = tipoElemento.toLowerCase(Locale.ROOT);
+        tipoColeccion = tipoColeccion.toLowerCase(Locale.ROOT);
+
+        // bool y boolean representan el mismo tipo.
+        if ("bool".equals(tipoElemento)) {
+            tipoElemento = "boolean";
+        }
+
+        if ("bool".equals(tipoColeccion)) {
+            tipoColeccion = "boolean";
+        }
+
+        // Coincidencia exacta.
+        if (tipoElemento.equals(tipoColeccion)) {
+            return true;
+        }
+
+        // Conversiones numéricas implícitas permitidas.
+        switch (tipoColeccion) {
+
+            case "byte":
+                return "short".equals(tipoElemento)
+                        || "int".equals(tipoElemento)
+                        || "long".equals(tipoElemento)
+                        || "float".equals(tipoElemento)
+                        || "double".equals(tipoElemento);
+
+            case "short":
+                return "int".equals(tipoElemento)
+                        || "long".equals(tipoElemento)
+                        || "float".equals(tipoElemento)
+                        || "double".equals(tipoElemento);
+
+            case "int":
+                return "long".equals(tipoElemento)
+                        || "float".equals(tipoElemento)
+                        || "double".equals(tipoElemento);
+
+            case "long":
+                return "float".equals(tipoElemento)
+                        || "double".equals(tipoElemento);
+
+            case "float":
+                return "double".equals(tipoElemento);
+
+            default:
+                return false;
+        }
     }
 
     /**

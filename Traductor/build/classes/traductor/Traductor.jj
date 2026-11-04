@@ -995,22 +995,55 @@ Nodo cicloDoWhile() :
 // FOREACH
 // ------------------------------------------------------
 Nodo cicloForeach() :
-{ Token t; Nodo n = new Nodo("cicloForeach"); Nodo cuerpo; }
 {
-    { regla("cicloForeach -> foreach ( tipo identificador in coleccion ) bloque"); }
+    Token t;
+    Nodo n = new Nodo("cicloForeach");
+    Nodo cuerpo;
+    String tipoDato;
+}
+{
+    {
+        regla("cicloForeach -> foreach ( tipo identificador in coleccion ) bloque");
+    }
+
     t=<FOREACH> { mostrarToken(t); }
     t=<PARENTESIS_IZQ> { mostrarToken(t); }
+
     (
-          t=<INT>     { mostrarToken(t); n.atributo("tipoDato", "int"); }
-        | t=<STRING>  { mostrarToken(t); n.atributo("tipoDato", "string"); }
-        | t=<BOOL>    { mostrarToken(t); n.atributo("tipoDato", "bool"); }
-        | t=<BOOLEAN> { mostrarToken(t); n.atributo("tipoDato", "boolean"); }
+          t=<INT>     { mostrarToken(t); tipoDato = "int"; }
+        | t=<BOOL>    { mostrarToken(t); tipoDato = "bool"; }
+        | t=<BOOLEAN> { mostrarToken(t); tipoDato = "boolean"; }
+        | t=<STRING>  { mostrarToken(t); tipoDato = "string"; }
+        | t=<CHAR>    { mostrarToken(t); tipoDato = "char"; }
+        | t=<DOUBLE>  { mostrarToken(t); tipoDato = "double"; }
+        | t=<FLOAT>   { mostrarToken(t); tipoDato = "float"; }
+        | t=<LONG>    { mostrarToken(t); tipoDato = "long"; }
+        | t=<SHORT>   { mostrarToken(t); tipoDato = "short"; }
+        | t=<BYTE>    { mostrarToken(t); tipoDato = "byte"; }
     )
-    t=<IDENTIFICADOR> { mostrarToken(t); n.valor = t.image; }
+
+    {
+        n.atributo("tipoDato", tipoDato);
+    }
+
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+        n.valor = t.image;
+    }
+
     t=<IN> { mostrarToken(t); }
-    t=<IDENTIFICADOR> { mostrarToken(t); n.atributo("coleccion", t.image); }
+
+    t=<IDENTIFICADOR> {
+        mostrarToken(t);
+        n.atributo("coleccion", t.image);
+    }
+
     t=<PARENTESIS_DER> { mostrarToken(t); }
-    cuerpo=bloque() { n.agregar(cuerpo); return n; }
+
+    cuerpo=bloque() {
+        n.agregar(cuerpo);
+        return n;
+    }
 }
 
 // ------------------------------------------------------
@@ -1638,6 +1671,7 @@ Nodo nuevoArreglo() :
 
     (
           t=<INT>     { mostrarToken(t); }
+        | t=<BOOL>    { mostrarToken(t); }
         | t=<BOOLEAN> { mostrarToken(t); }
         | t=<STRING>  { mostrarToken(t); }
         | t=<CHAR>    { mostrarToken(t); }
