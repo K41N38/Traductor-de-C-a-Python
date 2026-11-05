@@ -56,6 +56,18 @@ def _cs_convert_integer(valor, minimo, maximo):
     return resultado
 
 
+def _cs_convert_char_to_integer(valor, minimo, maximo):
+    if not isinstance(valor, str) or len(valor) != 1:
+        raise TypeError("Tipo no valido para Convert.ToInt32")
+
+    resultado = ord(valor)
+
+    if resultado < minimo or resultado > maximo:
+        raise OverflowError("Valor fuera del rango permitido")
+
+    return resultado
+
+
 def _cs_convert_float(valor):
     if valor is None:
         return 0.0
@@ -293,7 +305,7 @@ print("=== RESUMEN FINAL ===")
 if puntuacion == 0:
     print("Puntuación reiniciada: " + str(puntuacion))
 elif puntuacion == 50:
-    numero = _cs_parse_integer(input(), -2147483648, 2147483647)
+    numero = _cs_convert_integer(input(), -2147483648, 2147483647)
     print(numero + 1)
     decimal = _cs_parse_float(input())
     print(decimal)
@@ -302,7 +314,7 @@ elif puntuacion == 50:
     print(entero)
     print(precio)
     dato = "25"
-    num = _cs_parse_integer(dato, -2147483648, 2147483647)
+    num = _cs_convert_integer(dato, -2147483648, 2147483647)
     print(num + 5)
     prueba = _cs_convert_integer(input(), -2147483648, 2147483647)
 elif puntuacion == 75:

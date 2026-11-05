@@ -32,7 +32,7 @@ public class Semantico {
 
         FuncionInfo(String nombre, String tipoRetorno) {
             this.nombre = nombre;
-            this.tipoRetorno = normalizarTipo(tipoRetorno);
+            this.tipoRetorno = tipoRetorno;
         }
     }
 
@@ -77,7 +77,7 @@ public class Semantico {
 
                 info.nombresParametros.add(parametro.valor);
                 info.tiposParametros.add(
-                    normalizarTipo(parametro.atributoPorDefecto("tipoDato", "desconocido"))
+                    parametro.atributoPorDefecto("tipoDato", "desconocido")
                 );
             }
 
@@ -154,8 +154,8 @@ public class Semantico {
                 }
 
                 String nombreParametro = parametro.valor;
-                String tipoParametro = normalizarTipo(
-                    parametro.atributoPorDefecto("tipoDato", "desconocido")
+                String tipoParametro = parametro.atributoPorDefecto(
+                    "tipoDato", "desconocido"
                 );
 
                 if (ambito.variables.containsKey(nombreParametro)) {
@@ -227,8 +227,8 @@ public class Semantico {
 
         String nombre = nodo.valor;
 
-        String tipo = normalizarTipo(
-                nodo.atributoPorDefecto("tipoDato", "desconocido")
+        String tipo = nodo.atributoPorDefecto(
+                "tipoDato", "desconocido"
         );
 
         boolean esConstante

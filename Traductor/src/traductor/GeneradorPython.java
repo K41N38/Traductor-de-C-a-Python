@@ -282,6 +282,18 @@ public class GeneradorPython {
 
                 return resultado
 
+               
+            def _cs_convert_char_to_integer(valor, minimo, maximo):
+                if not isinstance(valor, str) or len(valor) != 1:
+                    raise TypeError("Tipo no valido para Convert.ToInt32")
+
+                resultado = ord(valor)
+
+                if resultado < minimo or resultado > maximo:
+                    raise OverflowError("Valor fuera del rango permitido")
+
+                return resultado
+               
 
             def _cs_convert_float(valor):
                 if valor is None:
@@ -1215,7 +1227,7 @@ public class GeneradorPython {
                 switch (tipo) {
 
                     case "int":
-                        return "_cs_parse_integer("
+                        return "_cs_convert_integer("
                                 + argumento
                                 + ", -2147483648, 2147483647)";
 
@@ -1262,10 +1274,19 @@ public class GeneradorPython {
                         return "_cs_convert_integer("
                                 + argumento + ", -32768, 32767)";
 
-                    case "int":
+                    case "int": {
+                        String tipoArgumento = inferirTipoExpr(n.hijo(0));
+
+                        if ("char".equals(tipoArgumento)) {
+                            return "_cs_convert_char_to_integer("
+                                    + argumento
+                                    + ", -2147483648, 2147483647)";
+                        }
+
                         return "_cs_convert_integer("
                                 + argumento
                                 + ", -2147483648, 2147483647)";
+                    }
 
                     case "long":
                         return "_cs_convert_integer("
@@ -1501,6 +1522,8 @@ public class GeneradorPython {
                     return "bool";
 
                 case "char":
+                    return "char";
+
                 case "string":
                     return "cadena";
 
@@ -1513,9 +1536,12 @@ public class GeneradorPython {
         if ("valor".equals(n.tipo)) {
             String tipoValor = n.atributo("tipoValor");
 
-            if ("cadena".equals(tipoValor)
-                    || "caracter".equals(tipoValor)) {
+            if ("cadena".equals(tipoValor)) {
                 return "cadena";
+            }
+
+            if ("caracter".equals(tipoValor)) {
+                return "char";
             }
 
             if ("true".equals(tipoValor) || "false".equals(tipoValor)) {
@@ -1611,7 +1637,8 @@ public class GeneradorPython {
         }
 
         return switch (tipo.toLowerCase(Locale.ROOT)) {
-            case "string", "cadena", "char" -> "cadena";
+            case "string", "cadena" -> "cadena";
+            case "char" -> "char";
             case "int", "long", "short", "byte" -> "int";
             case "double", "float" -> "float";
             case "bool", "boolean" -> "bool";
